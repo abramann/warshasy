@@ -29,7 +29,6 @@ class _SignPageState extends State<SignPage> {
       setState(() => _isButtonPressed = true);
       context.read<AuthBloc>().add(
         VerificationCodeRequested(
-          context: context,
           phone: PhoneNumber.format(_phoneController.text),
         ),
       );

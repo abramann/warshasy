@@ -14,9 +14,7 @@ class UserRepositoryImpl implements UserRepository {
   @override
   Future<User?> getCurrentUser() async {
     final session = sl<AuthSession>();
-    if (session.phone == null) return null;
-
-    return await remoteDataSource.getUserByPhone(session.phone!);
+    return session.user;
   }
 
   @override

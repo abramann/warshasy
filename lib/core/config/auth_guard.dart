@@ -15,12 +15,16 @@ class AuthGuard {
   ) async {
     final authState = authBloc.state;
 
-    if (authState is! AuthSuccess && isSignedUserRoute(state.fullPath!)) {
-      return '/profile-setup';
+    // If user is authenticated, allow access to signed routes
+    if (authState is AuthSuccess) {
+      return null; // Allow navigation
     }
-    //if (!(authState is AuthSuccess) && !isPublicRoute(state.fullPath!)) {
-    //  return '/login';
-    //}
+
+    // If user is NOT authenticated and trying to access protected routes
+    if (isSignedUserRoute(state.fullPath!)) {
+      return '/login'; // Redirect to login
+    }
+
     return null;
   }
 

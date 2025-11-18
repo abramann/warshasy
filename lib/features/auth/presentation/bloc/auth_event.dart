@@ -2,40 +2,29 @@
 part of 'auth_bloc.dart';
 
 abstract class AuthEvent extends Equatable {
-  BuildContext context;
-  AuthEvent({required this.context});
-
   @override
-  List<Object?> get props => [context];
+  List<Object?> get props => [];
 }
 
 class SignInRequested extends AuthEvent {
   final String phone;
   final String code;
 
-  SignInRequested({
-    required this.phone,
-    required this.code,
-    required super.context,
-  });
+  SignInRequested({required this.phone, required this.code});
 
   @override
-  List<Object> get props => [phone, code, super.context];
+  List<Object> get props => [phone, code];
 }
 
-class AuthStartup extends AuthEvent {
-  AuthStartup({required super.context});
-}
+class AuthStartup extends AuthEvent {}
 
-class SignOutRequested extends AuthEvent {
-  SignOutRequested({required super.context});
-}
+class SignOutRequested extends AuthEvent {}
 
 class VerificationCodeRequested extends AuthEvent {
   final String phone;
 
-  VerificationCodeRequested({required this.phone, required super.context});
+  VerificationCodeRequested({required this.phone});
 
   @override
-  List<Object> get props => [phone, super.context];
+  List<Object> get props => [phone];
 }

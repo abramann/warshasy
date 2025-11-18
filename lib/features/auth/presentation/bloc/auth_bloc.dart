@@ -1,8 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/widgets.dart';
-import 'package:warshasy/core/presentation/utils/error_handler_mixin.dart';
 import 'package:warshasy/core/usecases/usecase.dart';
 import 'package:warshasy/core/errors/errors.dart';
 import 'package:warshasy/core/config/injection_container.dart';
@@ -18,8 +16,7 @@ part 'auth_state.dart';
 // BLoC = Business Logic Component
 // Receives Events, processes them, emits States
 
-class AuthBloc extends Bloc<AuthEvent, AuthState>
-    with ErrorHandlerMixin<AuthState> {
+class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SignInUseCase signInUseCase;
   final SignOutUseCase signOutUseCase;
   final GetAuthinticationSessionUseCase getAuthenticationSessionUseCase;
@@ -59,7 +56,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState>
 
         case SignOutRequested():
           await signOutUseCase(NoParams());
-          sl.resetLazySingleton<AuthSession>();
+          //sl.resetLazySingleton<AuthSession>();
+          //sl.registerSingleton<AuthSession>(
+          //  AuthSession(phone: '', otpCode: 1, user: null),
+          //);
 
           emit(AuthWaitingUser());
           break;
@@ -73,7 +73,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState>
               SignInRequested(
                 phone: authSession!.phone!,
                 code: authSession!.otpCode!.toString(),
-                context: event.context,
               ),
             );
           }
@@ -88,7 +87,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState>
     } on Exception catch (e) {
       final failure = ErrorMapper.map(e);
       emit(AuthFailureState(failure));
-      handleError(failure, event.context); // optional: show snackbar
     }
   }
 }

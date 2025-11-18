@@ -103,11 +103,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
     final code = _getOtpCode();
     if (code.length == 4) {
       context.read<AuthBloc>().add(
-        SignInRequested(
-          context: context,
-          phone: widget.phoneNumber,
-          code: code,
-        ),
+        SignInRequested(phone: widget.phoneNumber, code: code),
       );
     } else {
       _showError('الرجاء إدخال رمز التحقق كاملاً');
@@ -117,7 +113,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
   void _resendCode() {
     if (_isResendEnabled) {
       context.read<AuthBloc>().add(
-        VerificationCodeRequested(context: context, phone: widget.phoneNumber),
+        VerificationCodeRequested(phone: widget.phoneNumber),
       );
       _startResendTimer();
       _showSuccess('تم إعادة إرسال الرمز');
@@ -175,7 +171,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
               });
             } else if (state is AuthSuccess) {
               _resendTimer?.cancel(); // stop timer
-              context.go('/profile/profile-setup');
+              context.go('/home');
               // Navigate to home or main screen
               // context.go('/home');
             } else if (state is VerificationCodeSent) {

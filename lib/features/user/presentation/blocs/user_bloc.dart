@@ -1,10 +1,8 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:warshasy/core/config/config.dart';
-import 'package:warshasy/core/presentation/utils/error_handler_mixin.dart';
 import 'package:warshasy/core/errors/errors.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 import 'package:warshasy/features/user/domain/entities/city.dart';
@@ -20,8 +18,7 @@ import 'package:warshasy/features/user/domain/usecases/upload_avatar_usecase.dar
 part 'user_event.dart';
 part 'user_state.dart';
 
-class UserBloc extends Bloc<UserEvent, UserState>
-    with ErrorHandlerMixin<UserState> {
+class UserBloc extends Bloc<UserEvent, UserState> {
   final GetUserByIdUseCase getUserByIdUseCase;
   final GetUserByPhoneUseCase getUserByPhoneUseCase;
   final UpdateUserUseCase updateUserUseCase;
@@ -142,11 +139,6 @@ class UserBloc extends Bloc<UserEvent, UserState>
     } on Exception catch (e) {
       final failure = ErrorMapper.map(e);
       emit(UserError(failure: failure));
-
-      // Optional: show snackbar if context is provided
-      if (event.context != null) {
-        handleError(failure, event.context!);
-      }
     }
   }
 }
