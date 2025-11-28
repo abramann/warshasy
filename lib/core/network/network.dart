@@ -24,7 +24,10 @@ class Network {
     } on TimeoutException {
       throw ConnectionTimeoutException('Connection timed out');
     } catch (e) {
-      rethrow;
+      if (e is Exception) {
+        rethrow;
+      }
+      throw ServerException('Unexpected error: ${e.toString()}');
     }
   }
 }

@@ -24,7 +24,7 @@ class ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     // Determine if viewing own profile or another user's profile
-    String targetUserId = widget.userId!;
+    String targetUserId = widget.userId;
     final isOwnProfile = sl<AuthSession>().user?.phone == targetUserId;
 
     return BlocProvider(

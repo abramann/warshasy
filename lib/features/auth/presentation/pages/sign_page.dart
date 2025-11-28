@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:warshasy/core/presentation/pages/loading_page.dart';
 import 'package:warshasy/core/utils/phone_number.dart';
 import 'package:warshasy/features/auth/auth.dart';
 

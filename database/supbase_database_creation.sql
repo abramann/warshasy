@@ -103,16 +103,35 @@ CREATE TABLE messages (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ============================================
--- 6. AUTH SESSIONS TABLE (for phone-based auth)
--- ============================================
-CREATE TABLE auth_sessions (
-  phone TEXT PRIMARY KEY,
+CREATE TABLE otp_sessions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  phone TEXT NOT NULL,
   otp_code TEXT NOT NULL,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   expires_at TIMESTAMPTZ NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CHECK (expires_at > created_at)
 );
+
+CREATE OR REPLACE FUNCTION cleanup_expired_otp_sessions()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM otp_sessions 
+  WHERE expires_at < NOW() OR used_at IS NOT NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TABLE device_sessions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  device_id TEXT NOT NULL,
+  session_token TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  expires_at TIMESTAMPTZ,
+  last_seen_at TIMESTAMPTZ,
+  revoked_at TIMESTAMPTZ
+);
+
 
 -- ============================================
 -- 7. CITY AREAS TABLE (Optional - for future area filtering)
@@ -156,9 +175,26 @@ CREATE INDEX idx_messages_room ON messages(room_id, created_at DESC);
 CREATE INDEX idx_messages_sender ON messages(sender_id);
 CREATE INDEX idx_messages_unread ON messages(room_id, is_read) WHERE is_read = FALSE;
 
--- Auth sessions index
-CREATE INDEX idx_auth_sessions_user ON auth_sessions(user_id);
-CREATE INDEX idx_auth_sessions_expires ON auth_sessions(expires_at);
+-- Auth index
+
+CREATE INDEX idx_otp_sessions_phone ON otp_sessions(phone);
+CREATE INDEX idx_otp_sessions_expires ON otp_sessions(expires_at);
+CREATE INDEX idx_otp_sessions_unused
+  ON otp_sessions(phone, otp_code)
+  WHERE used_at IS NULL;
+
+CREATE UNIQUE INDEX idx_device_sessions_user_device
+  ON device_sessions(user_id, device_id);
+
+CREATE UNIQUE INDEX idx_device_sessions_token
+  ON device_sessions(session_token);
+
+CREATE INDEX idx_device_sessions_user
+  ON device_sessions(user_id);
+
+CREATE INDEX idx_device_sessions_expires
+  ON device_sessions(expires_at)
+  WHERE expires_at IS NOT NULL;
 
 -- City areas index
 CREATE INDEX idx_city_areas_city ON city_areas(city);

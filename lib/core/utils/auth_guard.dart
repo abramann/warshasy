@@ -29,6 +29,8 @@ class AuthGuard {
   }
 
   bool isSignedUserRoute(String location) {
-    return location.startsWith('/user') || location.startsWith('/profile');
+    if (location.startsWith('/login')) return false;
+    if (location == '/home') return false;
+    return true;
   }
 }

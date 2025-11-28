@@ -1,4 +1,4 @@
-class AuthConstants {
+class AuthConfig {
   static const String _callMeBotKey = '6471288';
 
   static String callMeBotUrl(String phone, String code, String message) =>

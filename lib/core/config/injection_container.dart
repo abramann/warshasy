@@ -16,6 +16,7 @@ import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:warshasy/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
+import 'package:warshasy/features/auth/domain/usecases/persist_session_use_case.dart';
 import 'package:warshasy/features/user/data/datasources/user_remote_datasource.dart';
 import 'package:warshasy/features/user/domain/repositories/user_repository.dart';
 import 'package:warshasy/features/user/domain/repositories/user_repository_impl.dart';
@@ -72,9 +73,10 @@ void _initAuthintication() {
   // Use cases
   sl.registerLazySingleton(() => SignOutUseCase(sl()));
   sl.registerLazySingleton(() => SignInUseCase(sl()));
-  sl.registerLazySingleton(() => GetAuthinticationSessionUseCase(sl()));
+  sl.registerLazySingleton(() => GetStoredSessionUseCase(sl()));
   sl.registerLazySingleton(() => SendVerificationCodeUsecase(sl()));
-
+  sl.registerLazySingleton(() => RestoreSessionUseCase(sl()));
+  ;
   // Repository
   sl.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(remoteDataSource: sl(), localDataSource: sl()),
@@ -94,8 +96,9 @@ void _initAuthintication() {
     () => AuthBloc(
       signInUseCase: sl(),
       signOutUseCase: sl(),
-      getAuthenticationSessionUseCase: sl(),
+      getStoredSessionUseCase: sl(),
       sendVerificationCodeUseCase: sl(),
+      restoreSessionUseCase: sl(),
     ),
   );
 }

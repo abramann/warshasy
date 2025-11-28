@@ -20,7 +20,8 @@ class PhoneNumber {
   }
 
   static bool isValidPhoneNumber(String number) {
-    return number.length > 16 || number.length < 8 ? false : true;
+    final cleanNumber = number.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    return cleanNumber.length >= 8 && cleanNumber.length <= 16;
   }
 
   static bool _isSyrianPhoneNumber(String number) {

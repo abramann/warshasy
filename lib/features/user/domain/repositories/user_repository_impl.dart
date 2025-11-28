@@ -13,8 +13,8 @@ class UserRepositoryImpl implements UserRepository {
 
   @override
   Future<User?> getCurrentUser() async {
-    final session = sl<AuthSession>();
-    return session.user;
+    // TODO
+    return null;
   }
 
   @override

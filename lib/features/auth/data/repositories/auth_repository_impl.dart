@@ -38,12 +38,12 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<bool> isAuthenticated() async {
-    throw UnimplementedError();
+  Future<void> persistSession(AuthSession session) async {
+    await localDataSource.saveAuthSession(session);
   }
 
   @override
-  Future<AuthSession?> getAuthenticationSession() async {
+  Future<AuthSession?> getStoredSession() async {
     return await localDataSource.getAuthSession();
   }
 }

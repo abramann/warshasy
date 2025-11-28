@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:warshasy/core/errors/errors.dart';
 import 'package:warshasy/core/presentation/pages/loading_page.dart';
 import 'package:warshasy/features/auth/auth.dart';
 
@@ -20,7 +21,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
     4,
     (index) => TextEditingController(),
   );
-  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
+  final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
 
   Timer? _resendTimer; // <— keep reference to the timer
 
@@ -74,7 +75,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
   void _onOtpChanged(String value, int index) {
     if (value.isNotEmpty) {
       // Move to next field
-      if (index < 5) {
+      if (index < 3) {
         _focusNodes[index + 1].requestFocus();
       } else {
         // Last field, unfocus and verify
@@ -166,15 +167,15 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
         body: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is AuthFailureState) {
-              setState(() {
-                //
-              });
+              _clearOtp();
+              _showError('${state.failure.message}');
             } else if (state is AuthSuccess) {
               _resendTimer?.cancel(); // stop timer
               context.go('/home');
               // Navigate to home or main screen
               // context.go('/home');
             } else if (state is VerificationCodeSent) {
+              _clearOtp();
               _showSuccess('تم إرسال الرمز بنجاح');
             }
           },

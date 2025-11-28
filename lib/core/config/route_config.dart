@@ -8,7 +8,7 @@ import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 import 'package:warshasy/features/home/presentation/pages/home_page.dart';
 import 'package:warshasy/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:warshasy/features/auth/presentation/pages/sign_page.dart';
-import 'package:warshasy/core/config/auth_guard.dart';
+import 'package:warshasy/core/utils/auth_guard.dart';
 import 'package:warshasy/features/auth/presentation/pages/verify_code_page.dart';
 import 'package:warshasy/features/profile/presentation/pages/profile_page.dart';
 import 'package:warshasy/features/profile/presentation/pages/profile_setup_page.dart';
@@ -72,8 +72,7 @@ class AppRouter {
         }, // Redirect to default child
         routes: [
           GoRoute(
-            path:
-                'profile-setup', // → /profile/profile-setup (no leading slash!)
+            path: 'profile-setup',
             name: 'profile-setup',
             builder: (context, state) => const ProfileSetupPage(),
           ),
@@ -95,7 +94,7 @@ class AppRouter {
         builder:
             (context, state) => MultiBlocProvider(
               providers: [
-                BlocProvider(create: (context) => authBloc),
+                BlocProvider.value(value: authBloc),
                 BlocProvider(create: (context) => sl<UserBloc>()),
               ],
               child: const HomePage(),

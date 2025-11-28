@@ -21,8 +21,10 @@ class AuthWaitingUser extends AuthState {}
 class AuthLoading extends AuthState {}
 
 class AuthSuccess extends AuthState {
-  final User user; // or User if you have a model
-  const AuthSuccess(this.user);
+  final AuthSession session;
+  AuthSuccess(this.session);
+
+  User get user => session.user!;
 }
 
 class Unauthinticated extends AuthState {}

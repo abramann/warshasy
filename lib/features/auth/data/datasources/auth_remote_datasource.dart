@@ -7,7 +7,7 @@
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:warshasy/core/network/network.dart';
-import 'package:warshasy/features/auth/data/constants/auth_constants.dart';
+import 'package:warshasy/core/config/auth_config.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 import 'package:warshasy/features/user/data/models/user_model.dart';
 import '../../../../core/errors/errors.dart';
@@ -57,14 +57,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> signOut() async {
-    await network.guard(() async {
-      final authSession = sl<AuthSession>();
+    /* await network.guard(() async {
       await supabase
           .from('auth_sessions')
           .update({'last_logout': DateTime.now().toIso8601String()})
           .eq('phone', authSession.phone!);
-      return true;
-    });
+    });*/
+    // No server-side sign-out needed for this simple implementation
+    // TODO: Later we can revoke tokens or sessions if needed
   }
 
   @override
@@ -109,7 +109,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       " رمز التفعيل الخاص بك لتطبيق ورشة هو: $code",
     );
 
-    final url = AuthConstants.callMeBotUrl(phone, code, message);
+    final url = AuthConfig.callMeBotUrl(phone, code, message);
 
     try {
       final res = await http.get(Uri.parse(url));
