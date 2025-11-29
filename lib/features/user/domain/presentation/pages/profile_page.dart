@@ -7,32 +7,43 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:warshasy/core/config/injection_container.dart';
+import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
-import 'package:warshasy/features/user/presentation/blocs/user_bloc.dart';
+import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart';
 
 class ProfilePage extends StatefulWidget {
-  final String userId;
+  final String? userId;
 
   @override
   State<StatefulWidget> createState() => ProfilePageState();
 
-  const ProfilePage({super.key, required this.userId});
+  const ProfilePage({super.key, this.userId});
 }
 
 class ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     // Determine if viewing own profile or another user's profile
-    String targetUserId = widget.userId;
-    final isOwnProfile = sl<AuthSession>().user?.phone == targetUserId;
+    String targetUserId;
+    String currentUserId =
+        (BlocProvider.of<AuthBloc>(context).state as Authenticated)
+            .session
+            .userId;
+
+    late final bool isOwnProfile;
+    if (widget.userId != null) {
+      targetUserId = widget.userId!;
+      isOwnProfile = false;
+    } else {
+      targetUserId = currentUserId;
+      isOwnProfile = true;
+    }
 
     return BlocProvider(
       create:
           (context) =>
-              sl<UserBloc>()..add(
-                LoadUserRequested(userId: targetUserId, context: context),
-              ),
+              sl<UserBloc>()..add(LoadUserRequested(userId: targetUserId)),
       child: Scaffold(
         appBar: AppBar(
           title: Text(isOwnProfile ? 'ملفي الشخصي' : 'الملف الشخصي'),
@@ -81,10 +92,7 @@ class ProfilePageState extends State<ProfilePage> {
                     ElevatedButton.icon(
                       onPressed: () {
                         context.read<UserBloc>().add(
-                          LoadUserRequested(
-                            userId: targetUserId,
-                            context: context,
-                          ),
+                          LoadUserRequested(userId: targetUserId),
                         );
                       },
                       icon: const Icon(Icons.refresh),
@@ -117,9 +125,7 @@ class _ProfileContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: () async {
-        context.read<UserBloc>().add(
-          LoadUserRequested(userId: user.phone, context: context),
-        );
+        context.read<UserBloc>().add(LoadUserRequested(userId: user.id));
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -369,10 +375,7 @@ class _ProfileContent extends StatelessWidget {
                     onTap: () {
                       Navigator.pop(context);
                       context.read<UserBloc>().add(
-                        DeleteAvatarRequested(
-                          userId: user.phone,
-                          context: context,
-                        ),
+                        DeleteAvatarRequested(userId: user.phone),
                       );
                     },
                   ),

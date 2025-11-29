@@ -1,49 +1,86 @@
+import 'package:warshasy/core/utils/device_info.dart';
 import 'package:warshasy/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:warshasy/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 import 'package:warshasy/features/auth/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  final AuthRemoteDataSource remoteDataSource;
-  final AuthLocalDatasource localDataSource;
+  final AuthRemoteDataSource remote;
+  final AuthLocalDatasource local;
 
-  AuthRepositoryImpl({
-    required this.remoteDataSource,
-    required this.localDataSource,
-  });
+  AuthRepositoryImpl({required this.remote, required this.local});
   // تسجيل الدخول عبر رقم الهاتف + كود التفعيل
   @override
   Future<AuthSession> signInWithPhone({
     required String phone,
     required String code,
   }) async {
-    final session = await remoteDataSource.signInWithPhone(phone, code);
+    final deviceId = await DeviceInfo.getID();
 
-    await localDataSource.saveAuthSession(session);
+    final session = await remote.verifyCodeAndCreateSession(
+      phone: phone,
+      code: code,
+      deviceId: deviceId,
+    );
 
+    await local.saveSession(session);
     return session;
+  }
+
+  @override
+  Future<AuthSession?> restoreSession() async {
+    final stored = await local.getSession();
+    final deviceId = await DeviceInfo.getID();
+
+    if (stored == null) {
+      return null;
+    }
+
+    // If deviceId changed (edge case), force re-login
+    if (stored.deviceId != deviceId) {
+      await local.clearSession();
+      return null;
+    }
+
+    final remoteSession = await remote.restoreSession(
+      deviceId: stored.deviceId,
+      sessionToken: stored.sessionToken,
+    );
+
+    if (remoteSession == null) {
+      await local.clearSession();
+      return null;
+    }
+
+    await local.saveSession(remoteSession);
+    return remoteSession;
   }
 
   // إرسال كود التفعيل عبر واتساب (OTP)
   @override
   Future<void> sendVerificationCode({required String phone}) async {
-    return await remoteDataSource.sendVerificationCode(phone: phone);
+    return await remote.sendVerificationCode(phone: phone);
   }
 
-  // تسجيل الخروج (محلي فقط)
   @override
   Future<void> signOut() async {
-    await remoteDataSource.signOut();
-    await localDataSource.clearAuthSession();
+    final stored = await local.getSession();
+    if (stored != null) {
+      await remote.invalidateSession(
+        deviceId: stored.deviceId,
+        sessionToken: stored.sessionToken,
+      );
+    }
+    await local.clearSession();
   }
 
   @override
   Future<void> persistSession(AuthSession session) async {
-    await localDataSource.saveAuthSession(session);
+    await local.saveSession(session);
   }
 
   @override
   Future<AuthSession?> getStoredSession() async {
-    return await localDataSource.getAuthSession();
+    return await local.getSession();
   }
 }

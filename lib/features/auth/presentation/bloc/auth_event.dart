@@ -20,10 +20,10 @@ class AuthStartup extends AuthEvent {}
 
 class SignOutRequested extends AuthEvent {}
 
-class VerificationCodeRequested extends AuthEvent {
+class SendVerificationCodeRequested extends AuthEvent {
   final String phone;
 
-  VerificationCodeRequested({required this.phone});
+  SendVerificationCodeRequested({required this.phone});
 
   @override
   List<Object> get props => [phone];

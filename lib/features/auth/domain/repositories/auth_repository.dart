@@ -15,6 +15,8 @@ abstract class AuthRepository {
 
   Future<AuthSession?> getStoredSession();
 
+  Future<AuthSession?> restoreSession();
+
   Future<void> persistSession(AuthSession session);
 
   /// Map AuthException to specific Failure types

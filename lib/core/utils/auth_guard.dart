@@ -16,7 +16,7 @@ class AuthGuard {
     final authState = authBloc.state;
 
     // If user is authenticated, allow access to signed routes
-    if (authState is AuthSuccess) {
+    if (authState is Authenticated) {
       return null; // Allow navigation
     }
 

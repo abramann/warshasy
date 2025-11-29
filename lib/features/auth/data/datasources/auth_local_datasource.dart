@@ -2,9 +2,9 @@ import 'package:warshasy/core/storage/storage_service.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 
 abstract class AuthLocalDatasource {
-  Future<AuthSession?> getAuthSession();
-  Future<void> saveAuthSession(AuthSession profile);
-  Future<void> clearAuthSession();
+  Future<AuthSession?> getSession();
+  Future<void> saveSession(AuthSession profile);
+  Future<void> clearSession();
 }
 
 class AuthLocalDatasourceImpl implements AuthLocalDatasource {
@@ -14,7 +14,7 @@ class AuthLocalDatasourceImpl implements AuthLocalDatasource {
   AuthLocalDatasourceImpl({required this.storageService});
 
   @override
-  Future<AuthSession?> getAuthSession() async {
+  Future<AuthSession?> getSession() async {
     final sessionJson = storageService.getJson(authSessionKey);
     if (sessionJson == null) {
       return null;
@@ -23,12 +23,12 @@ class AuthLocalDatasourceImpl implements AuthLocalDatasource {
   }
 
   @override
-  Future<void> saveAuthSession(AuthSession session) async {
+  Future<void> saveSession(AuthSession session) async {
     await storageService.saveJson(authSessionKey, session.toJson());
   }
 
   @override
-  Future<void> clearAuthSession() async {
+  Future<void> clearSession() async {
     await storageService.remove(authSessionKey);
   }
 }

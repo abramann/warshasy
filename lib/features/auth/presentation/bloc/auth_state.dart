@@ -1,37 +1,24 @@
 part of 'auth_bloc.dart';
 
-// ============================================
-// STEP 7B: STATES
-// lib/features/auth/presentation/bloc/auth_state.dart
-// ============================================
-// States = Current situation of authentication
-// Think: "Is user logged in? Loading? Error?"
+abstract class AuthState {}
 
-abstract class AuthState extends Equatable {
-  const AuthState();
-
-  @override
-  List<Object?> get props => [];
-}
-
-class AuthStarting extends AuthState {}
-
-class AuthWaitingUser extends AuthState {}
+class AuthInitial extends AuthState {}
 
 class AuthLoading extends AuthState {}
 
-class AuthSuccess extends AuthState {
+class Authenticated extends AuthState {
   final AuthSession session;
-  AuthSuccess(this.session);
-
-  User get user => session.user!;
+  Authenticated(this.session);
 }
 
-class Unauthinticated extends AuthState {}
+class Unauthenticated extends AuthState {}
 
 class AuthFailureState extends AuthState {
-  final Failure failure;
-  const AuthFailureState(this.failure);
+  final String message;
+  AuthFailureState(this.message);
 }
 
-class VerificationCodeSent extends AuthState {}
+class VerificationCodeSent extends AuthState {
+  final String phone;
+  VerificationCodeSent(this.phone);
+}

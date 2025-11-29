@@ -7,6 +7,7 @@ import 'package:warshasy/features/user/domain/entities/user.dart';
 
 class UserModel extends User {
   const UserModel({
+    required super.id,
     required super.phone,
     required super.fullName,
     super.city,
@@ -19,6 +20,7 @@ class UserModel extends User {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
+      id: json['id'] as String,
       phone: json['phone'] as String,
       fullName: json['full_name'] as String,
       city:
@@ -36,6 +38,7 @@ class UserModel extends User {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'phone': phone,
       'full_name': fullName,
       'city': city?.arabicName,
@@ -48,6 +51,7 @@ class UserModel extends User {
 
   factory UserModel.fromEntity(User entity) {
     return UserModel(
+      id: entity.id,
       phone: entity.phone,
       fullName: entity.fullName,
       city: entity.city,
@@ -60,6 +64,7 @@ class UserModel extends User {
   }
 
   UserModel copyWith({
+    String? id,
     String? phone,
     String? fullName,
     City? city,
@@ -70,6 +75,7 @@ class UserModel extends User {
     DateTime? updatedAt,
   }) {
     return UserModel(
+      id: id ?? this.id,
       phone: phone ?? this.phone,
       fullName: fullName ?? this.fullName,
       city: city ?? this.city,

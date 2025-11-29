@@ -14,21 +14,10 @@ import 'package:warshasy/core/storage/storage_service.dart';
 // Import all auth files
 import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/auth/data/datasources/auth_local_datasource.dart';
-import 'package:warshasy/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
-import 'package:warshasy/features/auth/domain/usecases/persist_session_use_case.dart';
 import 'package:warshasy/features/user/data/datasources/user_remote_datasource.dart';
 import 'package:warshasy/features/user/domain/repositories/user_repository.dart';
 import 'package:warshasy/features/user/domain/repositories/user_repository_impl.dart';
-import 'package:warshasy/features/user/domain/usecases/check_phone_exists_usecase.dart';
-import 'package:warshasy/features/user/domain/usecases/create_user_usecase.dart';
-import 'package:warshasy/features/user/domain/usecases/delete_avatar_usecase.dart';
-import 'package:warshasy/features/user/domain/usecases/get_user_by_id_usecase.dart';
-import 'package:warshasy/features/user/domain/usecases/get_user_by_phone_usecase.dart';
-import 'package:warshasy/features/user/domain/usecases/search_users_usecase.dart';
-import 'package:warshasy/features/user/domain/usecases/update_user_usecase.dart';
-import 'package:warshasy/features/user/domain/usecases/upload_avatar_usecase.dart';
-import 'package:warshasy/features/user/presentation/blocs/user_bloc.dart';
+import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart';
 
 // ============================================
 // DEPENDENCY INJECTION - PRODUCTS MODULE
@@ -70,16 +59,9 @@ Future<void> init() async {
 }
 
 void _initAuthintication() {
-  // Use cases
-  sl.registerLazySingleton(() => SignOutUseCase(sl()));
-  sl.registerLazySingleton(() => SignInUseCase(sl()));
-  sl.registerLazySingleton(() => GetStoredSessionUseCase(sl()));
-  sl.registerLazySingleton(() => SendVerificationCodeUsecase(sl()));
-  sl.registerLazySingleton(() => RestoreSessionUseCase(sl()));
-  ;
   // Repository
   sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(remoteDataSource: sl(), localDataSource: sl()),
+    () => AuthRepositoryImpl(remote: sl(), local: sl()),
   );
 
   // Data sources
@@ -92,15 +74,7 @@ void _initAuthintication() {
   );
 
   // Bloc
-  sl.registerFactory(
-    () => AuthBloc(
-      signInUseCase: sl(),
-      signOutUseCase: sl(),
-      getStoredSessionUseCase: sl(),
-      sendVerificationCodeUseCase: sl(),
-      restoreSessionUseCase: sl(),
-    ),
-  );
+  sl.registerFactory(() => AuthBloc(authRepository: sl()));
 }
 
 /// Initialize User feature dependencies
@@ -115,28 +89,8 @@ void _initUser() {
     () => UserRepositoryImpl(remoteDataSource: sl()),
   );
 
-  // Use cases
-  sl.registerLazySingleton(() => GetUserByIdUseCase(sl()));
-  sl.registerLazySingleton(() => GetUserByPhoneUseCase(sl()));
-  sl.registerLazySingleton(() => CreateUserUseCase(sl()));
-  sl.registerLazySingleton(() => UpdateUserUseCase(sl()));
-  sl.registerLazySingleton(() => UploadAvatarUseCase(sl()));
-  sl.registerLazySingleton(() => DeleteAvatarUseCase(sl()));
-  sl.registerLazySingleton(() => SearchUsersUseCase(sl()));
-  sl.registerLazySingleton(() => CheckPhoneExistsUseCase(sl()));
-
   // BLoC
-  sl.registerFactory(
-    () => UserBloc(
-      getUserByIdUseCase: sl(),
-      getUserByPhoneUseCase: sl(),
-      updateUserUseCase: sl(),
-      uploadAvatarUseCase: sl(),
-      deleteAvatarUseCase: sl(),
-      searchUsersUseCase: sl(),
-      checkPhoneExistsUseCase: sl(),
-    ),
-  );
+  sl.registerFactory(() => UserBloc(userRepository: sl()));
 }
 
 // ============================================

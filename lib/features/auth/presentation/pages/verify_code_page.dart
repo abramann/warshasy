@@ -114,7 +114,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
   void _resendCode() {
     if (_isResendEnabled) {
       context.read<AuthBloc>().add(
-        VerificationCodeRequested(phone: widget.phoneNumber),
+        SendVerificationCodeRequested(phone: widget.phoneNumber),
       );
       _startResendTimer();
       _showSuccess('تم إعادة إرسال الرمز');
@@ -168,8 +168,8 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
           listener: (context, state) {
             if (state is AuthFailureState) {
               _clearOtp();
-              _showError('${state.failure.message}');
-            } else if (state is AuthSuccess) {
+              _showError('${state.message}');
+            } else if (state is Authenticated) {
               _resendTimer?.cancel(); // stop timer
               context.go('/home');
               // Navigate to home or main screen

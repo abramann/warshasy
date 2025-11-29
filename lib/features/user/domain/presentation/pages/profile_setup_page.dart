@@ -10,7 +10,7 @@ import 'package:warshasy/core/config/config.dart';
 import 'package:warshasy/core/storage/repository/local_storage_reposotory.dart';
 import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
-import 'package:warshasy/features/user/presentation/blocs/user_bloc.dart';
+import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart';
 
 class ProfileSetupPage extends StatefulWidget {
   const ProfileSetupPage({super.key});
@@ -26,6 +26,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   City? _selectedCity;
   bool _isLoading = true;
   bool _isSaving = false;
+  late String _userId;
+  late String _phone;
 
   @override
   void dispose() {
@@ -37,37 +39,33 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   void _saveProfile(BuildContext ctx) {
     if (_formKey.currentState!.validate()) {
       ctx.read<UserBloc>().add(
-        UpdateUserRequested(
-          userId: sl<AuthSession>().phone,
+        UpdateProfileRequested(
+          userId: _userId,
+          phone: _phone,
           fullName: _nameController.text.trim(),
           city: _selectedCity,
           bio:
               _bioController.text.trim().isEmpty
                   ? null
                   : _bioController.text.trim(),
-          context: context,
         ),
       );
     }
   }
 
   void setUser(User user) {
+    _userId = user.id;
+    _phone = user.phone;
     _nameController.text = user.fullName;
     _bioController.text = user.bio ?? '';
-    _selectedCity = City.fromString(user.city?.arabicName ?? '');
+    _selectedCity = City.fromString(user.city?.arabicName);
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create:
-          (context) =>
-              sl<UserBloc>()..add(
-                LoadUserRequested(
-                  userId: sl<AuthSession>().phone,
-                  context: context,
-                ),
-              ),
+          (context) => sl<UserBloc>()..add(LoadUserRequested(userId: _userId)),
 
       child: Builder(
         builder:
@@ -323,9 +321,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     final userId = storage.getUserId();
 
     if (userId != null) {
-      context.read<UserBloc>().add(
-        DeleteAvatarRequested(userId: userId, context: context),
-      );
+      context.read<UserBloc>().add(DeleteAvatarRequested(userId: userId));
     }
   }
 }

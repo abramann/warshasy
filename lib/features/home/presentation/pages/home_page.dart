@@ -14,24 +14,23 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   String selectedCity = City.damascus.arabicName;
-  User? user;
+  AuthSession? authSession;
 
   @override
   Widget build(BuildContext context) {
     final isTablet = MediaQuery.of(context).size.width > 600;
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        User? user;
         bool _isLoading = false;
-        if (state is AuthSuccess) {
-          user = state.user;
-        } else if (state is AuthLoading || state is AuthStarting) {
+        if (state is Authenticated) {
+          authSession = state.session;
+        } else if (state is AuthLoading) {
           _isLoading = true;
-          user = null;
+          authSession = null;
         } else {
-          user = null;
+          authSession = null;
         }
-        selectedCity = user?.city?.arabicName ?? selectedCity;
+        selectedCity = authSession?.city?.arabicName ?? selectedCity;
 
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -93,7 +92,7 @@ class _HomePageState extends State<HomePage> {
                               _isLoading
                                   ? CircularProgressIndicator()
                                   : Text(
-                                    'أهلا وسهلا ! 👋 ${user?.fullName ?? ''}',
+                                    'أهلا وسهلا ! 👋 ${authSession?.fullName ?? ''}',
                                     style: TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.w600,
@@ -112,7 +111,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         SizedBox(width: 12), // a little space before the button
-                        if (user != null)
+                        if (authSession != null)
                           ElevatedButton(
                             onPressed: () {
                               context.pushNamed('post-service');

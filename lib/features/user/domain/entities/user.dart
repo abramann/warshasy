@@ -9,6 +9,7 @@ import 'package:warshasy/features/user/domain/entities/city.dart';
 // ============================================
 
 class User extends Equatable {
+  final String id;
   final String phone;
   final String fullName;
   final City? city;
@@ -19,6 +20,7 @@ class User extends Equatable {
   final DateTime updatedAt;
 
   const User({
+    required this.id,
     required this.phone,
     required this.fullName,
     this.city,
@@ -31,6 +33,7 @@ class User extends Equatable {
 
   @override
   List<Object?> get props => [
+    id,
     phone,
     fullName,
     city,

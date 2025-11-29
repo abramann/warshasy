@@ -27,7 +27,7 @@ class _SignPageState extends State<SignPage> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isButtonPressed = true);
       context.read<AuthBloc>().add(
-        VerificationCodeRequested(
+        SendVerificationCodeRequested(
           phone: PhoneNumber.format(_phoneController.text),
         ),
       );

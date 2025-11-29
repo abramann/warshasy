@@ -24,7 +24,8 @@ enum City {
 
   String get displayName => arabicName;
 
-  static City fromString(String value) {
+  static City fromString(String? value) {
+    if (value == null) return City.damascus;
     return City.values.firstWhere(
       (city) => city.arabicName == value || city.englishName == value,
       orElse: () => City.damascus,

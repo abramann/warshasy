@@ -10,9 +10,9 @@ import 'package:warshasy/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:warshasy/features/auth/presentation/pages/sign_page.dart';
 import 'package:warshasy/core/utils/auth_guard.dart';
 import 'package:warshasy/features/auth/presentation/pages/verify_code_page.dart';
-import 'package:warshasy/features/profile/presentation/pages/profile_page.dart';
-import 'package:warshasy/features/profile/presentation/pages/profile_setup_page.dart';
-import 'package:warshasy/features/user/presentation/blocs/user_bloc.dart';
+import 'package:warshasy/features/user/domain/presentation/pages/profile_page.dart';
+import 'package:warshasy/features/user/domain/presentation/pages/profile_setup_page.dart';
+import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart';
 
 class AppRouter {
   final AuthBloc authBloc;
@@ -68,7 +68,7 @@ class AppRouter {
         name: 'profile',
         builder: (context, state) {
           // Show the user's own profile by default
-          return ProfilePage(userId: sl<AuthSession>().phone);
+          return ProfilePage();
         }, // Redirect to default child
         routes: [
           GoRoute(
@@ -129,5 +129,3 @@ class GoRouterRefreshStream extends ChangeNotifier {
     super.dispose();
   }
 }
-
-// ...existing code...
