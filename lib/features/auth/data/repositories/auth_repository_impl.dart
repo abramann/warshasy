@@ -9,7 +9,7 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthLocalDatasource local;
 
   AuthRepositoryImpl({required this.remote, required this.local});
-  // تسجيل الدخول عبر رقم الهاتف + كود التفعيل
+
   @override
   Future<AuthSession> signInWithPhone({
     required String phone,
@@ -56,7 +56,6 @@ class AuthRepositoryImpl implements AuthRepository {
     return remoteSession;
   }
 
-  // إرسال كود التفعيل عبر واتساب (OTP)
   @override
   Future<void> sendVerificationCode({required String phone}) async {
     return await remote.sendVerificationCode(phone: phone);
@@ -72,11 +71,6 @@ class AuthRepositoryImpl implements AuthRepository {
       );
     }
     await local.clearSession();
-  }
-
-  @override
-  Future<void> persistSession(AuthSession session) async {
-    await local.saveSession(session);
   }
 
   @override

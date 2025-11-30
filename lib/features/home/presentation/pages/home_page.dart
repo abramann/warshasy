@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:warshasy/core/config/config.dart';
 import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 
@@ -45,19 +44,21 @@ class _HomePageState extends State<HomePage> {
                 IconButton(
                   icon: const Icon(Icons.account_circle_outlined),
                   onPressed: () {
-                    context.push('/profile'); // ✅ Push to the actual page
+                    context.push('/profile');
                   },
                 ),
-                IconButton(
-                  icon: const Icon(Icons.notifications_outlined),
-                  onPressed: () {},
-                ),
-                IconButton(
-                  icon: const Icon(Icons.logout_outlined),
-                  onPressed: () {
-                    context.read<AuthBloc>().add(SignOutRequested());
-                  },
-                ),
+                if (authSession != null) ...[
+                  IconButton(
+                    icon: const Icon(Icons.notifications_outlined),
+                    onPressed: () {},
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.logout_outlined),
+                    onPressed: () {
+                      context.read<AuthBloc>().add(SignOutRequested());
+                    },
+                  ),
+                ],
               ],
 
               flexibleSpace: Container(

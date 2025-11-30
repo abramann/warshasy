@@ -54,6 +54,9 @@ class _SignPageState extends State<SignPage> {
           listener: (context, state) {
             if (state is AuthFailureState) {
               setState(() => _isButtonPressed = false);
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(state.message)));
             } else if (state is VerificationCodeSent) {
               setState(() {
                 _isButtonPressed = false;

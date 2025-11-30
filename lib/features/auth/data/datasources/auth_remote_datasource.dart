@@ -122,10 +122,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
             .select()
             .eq('phone', phone)
             .eq('otp_code', code)
-            .gt('expires_at', DateTime.now().toIso8601String())
-            .isFilter('used_at', null)
-            .order('created_at', ascending: false)
-            .limit(1)
+            //.gt('expires_at', DateTime.now().toIso8601String())
+            // .isFilter('used_at', null)
+            // .order('created_at', ascending: false)
+            //.limit(1)
             .maybeSingle();
 
     if (otpRow == null) {
@@ -171,16 +171,20 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
   }
 
-  Future<User> createUser({required String phone}) async {
+  Future<Warsha.User> createUser({required String phone}) async {
     // Create with minimal info
     final json =
         await supabase
             .from('users')
-            .insert({'full_name': 'مستخدم جديد', 'phone': phone})
+            .insert({
+              'full_name': 'مستخدم جديد',
+              'phone': phone,
+              'updated_at': DateTime.now().toIso8601String(),
+            })
             .select()
             .single();
 
-    return User.fromJson(json)!;
+    return UserModel.fromJson(json);
   }
 
   Future<Warsha.User?> getUser({String? userId, String? phone}) async {
@@ -218,9 +222,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final expiresAt = now.add(const Duration(minutes: 5));
     final otp = _generateOtp(length: 4);
 
-    // 1) Optionally delete old OTPs for this phone
-    await supabase.from('otp_sessions').delete().eq('phone', phone);
-
+    // 1) Delete old OTPs for this phone
+    final old =
+        await supabase
+            .from('otp_sessions')
+            .select()
+            .eq('phone', phone)
+            .maybeSingle();
+    if (old != null) {
+      await supabase.from('otp_sessions').delete().eq('phone', phone);
+    }
     // 2) Insert new row
     await supabase.from('otp_sessions').insert({
       'phone': phone,
