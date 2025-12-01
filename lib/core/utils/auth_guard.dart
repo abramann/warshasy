@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+// lib/core/utils/auth_guard.dart
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
-import 'package:warshasy/core/config/injection_container.dart';
-import 'package:warshasy/core/storage/repository/local_storage_reposotory.dart';
 import 'package:warshasy/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:warshasy/core/config/app_routes.dart';
 
 class AuthGuard {
   final AuthBloc authBloc;
@@ -14,23 +14,39 @@ class AuthGuard {
     GoRouterState state,
   ) async {
     final authState = authBloc.state;
+    final location = state.fullPath ?? state.uri.toString();
 
-    // If user is authenticated, allow access to signed routes
-    if (authState is Authenticated) {
-      return null; // Allow navigation
+    final isLoggedIn = authState is Authenticated;
+
+    // If public route -> always allow
+    if (_isPublicRoute(location)) {
+      // Optional: if logged in and trying to visit /login, push them away
+      if (isLoggedIn && location.startsWith(AppRoutePath.login)) {
+        return AppRoutePath.home;
+      }
+      return null;
     }
 
-    // If user is NOT authenticated and trying to access protected routes
-    if (isSignedUserRoute(state.fullPath!)) {
-      return '/login'; // Redirect to login
+    // Protected routes:
+    if (!isLoggedIn) {
+      // Save where they wanted to go, so we can maybe use it later
+      // final from = state.uri.toString();
+      // return '${AppRoutePath.login}?from=$from';
+      return AppRoutePath.login;
     }
 
+    // Signed user + protected route -> allow
     return null;
   }
 
-  bool isSignedUserRoute(String location) {
-    if (location.startsWith('/login')) return false;
-    if (location == '/home') return false;
-    return true;
+  bool _isPublicRoute(String location) {
+    if (location == AppRoutePath.root) return true;
+    if (location == AppRoutePath.home) return true;
+    if (location.startsWith(AppRoutePath.login)) return true;
+
+    // Optional: public service detail
+    if (location.startsWith(AppRoutePath.serviceDetail)) return true;
+
+    return false;
   }
 }

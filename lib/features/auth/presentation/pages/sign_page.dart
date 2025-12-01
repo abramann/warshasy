@@ -52,19 +52,32 @@ class _SignPageState extends State<SignPage> {
       child: Scaffold(
         body: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
+            late final String message;
+            late final Color bkColor;
+            if (state is Authenticated) {
+              message = 'تم التسجيل بنجاح';
+              bkColor = Colors.blue;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(message), backgroundColor: bkColor),
+              );
+            }
             if (state is AuthFailureState) {
               setState(() => _isButtonPressed = false);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.message)));
+              message = state.message;
+              bkColor = Colors.red;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(message), backgroundColor: bkColor),
+              );
             } else if (state is VerificationCodeSent) {
               setState(() {
                 _isButtonPressed = false;
               });
+
               context.push(
                 '/login/verify-code',
                 extra: PhoneNumber.format(_phoneController.text),
               );
+              return;
             }
           },
           builder: (context, state) {

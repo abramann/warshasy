@@ -1,46 +1,51 @@
-import 'dart:async';
-
+// lib/core/config/route_config.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:warshasy/core/config/config.dart';
-import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
-import 'package:warshasy/features/home/presentation/pages/home_page.dart';
+
+import 'app_routes.dart';
+import 'package:warshasy/core/utils/auth_guard.dart';
+
 import 'package:warshasy/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:warshasy/features/auth/presentation/pages/sign_page.dart';
-import 'package:warshasy/core/utils/auth_guard.dart';
 import 'package:warshasy/features/auth/presentation/pages/verify_code_page.dart';
+
+import 'package:warshasy/features/home/presentation/pages/home_page.dart';
 import 'package:warshasy/features/user/domain/presentation/pages/profile_page.dart';
 import 'package:warshasy/features/user/domain/presentation/pages/profile_setup_page.dart';
-import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart';
 
 class AppRouter {
   final AuthBloc authBloc;
+  late final AuthGuard _authGuard = AuthGuard(authBloc);
 
   AppRouter(this.authBloc);
 
-  late final AuthGuard _authGuard = AuthGuard(authBloc);
-
   late final GoRouter router = GoRouter(
-    // Where to start
-    initialLocation: '/home',
-
-    // Refresh router when auth state changes
+    initialLocation: AppRoutePath.home,
     refreshListenable: GoRouterRefreshStream(authBloc.stream),
-
-    // Redirect logic based on auth state
     redirect: (context, state) => _authGuard.handleAuthState(context, state),
-
-    // All routes
     routes: [
-      // ==========================================
-      // AUTH ROUTES (Public - No auth needed)
-      // ==========================================
+      // ROOT -> HOME
+      GoRoute(path: AppRoutePath.root, redirect: (_, __) => AppRoutePath.home),
 
-      // Login Page
+      // PUBLIC HOME
       GoRoute(
-        path: '/login',
-        name: 'login',
+        path: AppRoutePath.home,
+        name: AppRouteName.home,
+        builder:
+            (context, state) => MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: authBloc),
+                // other blocs for home (e.g. UserBloc) if needed
+              ],
+              child: const HomePage(),
+            ),
+      ),
+
+      // AUTH (PUBLIC)
+      GoRoute(
+        path: AppRoutePath.login,
+        name: AppRouteName.login,
         pageBuilder:
             (context, state) => MaterialPage(
               key: state.pageKey,
@@ -52,33 +57,32 @@ class AppRouter {
         routes: [
           GoRoute(
             path: 'verify-code',
-            name: 'verify-code',
+            name: AppRouteName.verifyCode,
             builder: (context, state) {
+              final phone = state.extra as String;
               return BlocProvider.value(
                 value: authBloc,
-                child: VerifyCodePage(phoneNumber: state.extra as String),
+                child: VerifyCodePage(phoneNumber: phone),
               );
             },
           ),
         ],
       ),
 
+      // PROFILE (SIGNED)
       GoRoute(
-        path: '/profile',
-        name: 'profile',
-        builder: (context, state) {
-          // Show the user's own profile by default
-          return ProfilePage();
-        }, // Redirect to default child
+        path: AppRoutePath.profile,
+        name: AppRouteName.profile,
+        builder: (context, state) => ProfilePage(),
         routes: [
           GoRoute(
             path: 'profile-setup',
-            name: 'profile-setup',
+            name: AppRouteName.profileSetup,
             builder: (context, state) => const ProfileSetupPage(),
           ),
           GoRoute(
-            path: ':id', // → /profile/:id
-            name: 'profile-detail',
+            path: ':id',
+            name: AppRouteName.profileDetail,
             builder: (context, state) {
               final id = state.pathParameters['id']!;
               return ProfilePage(userId: id);
@@ -87,45 +91,60 @@ class AppRouter {
         ],
       ),
 
-      // ==========================================
-      // ==========================================
+      // SERVICES (SIGNED)
       GoRoute(
-        path: '/home',
-        builder:
-            (context, state) => MultiBlocProvider(
-              providers: [
-                BlocProvider.value(value: authBloc),
-                BlocProvider(create: (context) => sl<UserBloc>()),
-              ],
-              child: const HomePage(),
-            ),
-        routes: [],
+        path: AppRoutePath.requestService,
+        name: AppRouteName.requestService,
+        builder: (context, state) {
+          // TODO: replace with your real widget
+          return const Scaffold(body: Center(child: Text('Request service')));
+        },
+      ),
+      GoRoute(
+        path: AppRoutePath.postService,
+        name: AppRouteName.postService,
+        builder: (context, state) {
+          // TODO: replace with your real widget
+          return const Scaffold(body: Center(child: Text('Post service')));
+        },
+      ),
+      GoRoute(
+        path: '${AppRoutePath.serviceDetail}/:serviceId',
+        name: AppRouteName.serviceDetail,
+        builder: (context, state) {
+          final id = state.pathParameters['serviceId']!;
+          // This one can be public or protected — your choice
+          return Scaffold(
+            appBar: AppBar(title: const Text('Service details')),
+            body: Center(child: Text('Service ID: $id')),
+          );
+        },
       ),
 
-      // Root redirect
-      GoRoute(path: '/', redirect: (context, state) => '/home'),
+      // CHATS (SIGNED)
+      GoRoute(
+        path: AppRoutePath.chats,
+        name: AppRouteName.chats,
+        builder: (context, state) {
+          // TODO: replace with chat list widget
+          return const Scaffold(body: Center(child: Text('Chats list')));
+        },
+      ),
+      GoRoute(
+        path: '${AppRoutePath.chats}/:chatId',
+        name: AppRouteName.chatDetail,
+        builder: (context, state) {
+          final chatId = state.pathParameters['chatId']!;
+          // TODO: replace with chat screen
+          return Scaffold(
+            appBar: AppBar(title: const Text('Chat')),
+            body: Center(child: Text('Chat ID: $chatId')),
+          );
+        },
+      ),
     ],
-    // Error page
     errorBuilder:
         (context, state) =>
             Scaffold(body: Center(child: Text('Page not found: ${state.uri}'))),
   );
-}
-
-// Helper class to make GoRouter listen to BLoC stream
-class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<dynamic> stream) {
-    notifyListeners();
-    _subscription = stream.asBroadcastStream().listen(
-      (dynamic _) => notifyListeners(),
-    );
-  }
-
-  late final StreamSubscription<dynamic> _subscription;
-
-  @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
-  }
 }

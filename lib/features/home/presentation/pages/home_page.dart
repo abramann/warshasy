@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:warshasy/core/config/app_routes.dart';
 import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 
@@ -115,7 +116,7 @@ class _HomePageState extends State<HomePage> {
                         if (authSession != null)
                           ElevatedButton(
                             onPressed: () {
-                              context.pushNamed('post-service');
+                              context.pushNamed(AppRouteName.postService);
                             },
                             child: Text('اعرض خدمة'),
                           )
@@ -124,7 +125,7 @@ class _HomePageState extends State<HomePage> {
                               ? CircularProgressIndicator()
                               : ElevatedButton(
                                 onPressed: () {
-                                  context.pushNamed('login');
+                                  context.pushNamed(AppRouteName.login);
                                 },
                                 child: Text('أعلن عن نفسك'),
                               ),
