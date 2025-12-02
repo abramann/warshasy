@@ -1,5 +1,7 @@
 library constants;
 
-export 'colors.dart';
 export 'icons.dart';
-export 'text_style.dart';
+
+class AppStrings {
+  static const appName = 'تك فكس';
+}

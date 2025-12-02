@@ -1,28 +1,34 @@
 // lib/core/config/route_config.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
-import 'app_routes.dart';
+import 'package:warshasy/core/localization/localization.dart';
 import 'package:warshasy/core/utils/auth_guard.dart';
-
 import 'package:warshasy/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:warshasy/features/auth/presentation/pages/sign_page.dart';
 import 'package:warshasy/features/auth/presentation/pages/verify_code_page.dart';
-
 import 'package:warshasy/features/home/presentation/pages/home_page.dart';
 import 'package:warshasy/features/user/domain/presentation/pages/profile_page.dart';
 import 'package:warshasy/features/user/domain/presentation/pages/profile_setup_page.dart';
+
+import 'app_routes.dart';
+
+extension GoRouterContextX on BuildContext {
+  String? get fullPath => GoRouterState.of(this).fullPath?.toString();
+  String get currentUri => GoRouterState.of(this).uri.toString();
+}
 
 class AppRouter {
   final AuthBloc authBloc;
   late final AuthGuard _authGuard = AuthGuard(authBloc);
 
   AppRouter(this.authBloc);
-
+  static String getCurrentRoute(BuildContext ctx) =>
+      GoRouterState.of(ctx).uri.toString();
   late final GoRouter router = GoRouter(
     initialLocation: AppRoutePath.home,
-    refreshListenable: GoRouterRefreshStream(authBloc.stream),
+    //refreshListenable: GoRouterRefreshStream(authBloc.stream),
     redirect: (context, state) => _authGuard.handleAuthState(context, state),
     routes: [
       // ROOT -> HOME
@@ -96,16 +102,18 @@ class AppRouter {
         path: AppRoutePath.requestService,
         name: AppRouteName.requestService,
         builder: (context, state) {
-          // TODO: replace with your real widget
-          return const Scaffold(body: Center(child: Text('Request service')));
+          final l = AppLocalizations.of(context);
+          // TODO: replace with real widget
+          return Scaffold(body: Center(child: Text(l.requestService)));
         },
       ),
       GoRoute(
         path: AppRoutePath.postService,
         name: AppRouteName.postService,
         builder: (context, state) {
-          // TODO: replace with your real widget
-          return const Scaffold(body: Center(child: Text('Post service')));
+          final l = AppLocalizations.of(context);
+          // TODO: replace with real widget
+          return Scaffold(body: Center(child: Text(l.postService)));
         },
       ),
       GoRoute(
@@ -113,7 +121,7 @@ class AppRouter {
         name: AppRouteName.serviceDetail,
         builder: (context, state) {
           final id = state.pathParameters['serviceId']!;
-          // This one can be public or protected — your choice
+          // This one can be public or protected
           return Scaffold(
             appBar: AppBar(title: const Text('Service details')),
             body: Center(child: Text('Service ID: $id')),

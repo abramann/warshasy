@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:warshasy/core/localization/localization.dart';
 
 // Data Models
 class ServiceCategory {
@@ -112,6 +113,7 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
   @override
   Widget build(BuildContext context) {
     final isTablet = MediaQuery.of(context).size.width > 600;
+    final l = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA),
@@ -128,7 +130,7 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             Text(
-              '${widget.category.subcategories.length} Services Available',
+              '${widget.category.subcategories.length} ${l.servicesAvailable}',
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.normal,
@@ -176,7 +178,7 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
                     });
                   },
                   decoration: InputDecoration(
-                    hintText: 'Search in ${widget.category.name}...',
+                    hintText: '${l.searchIn} ${widget.category.name}...',
                     hintStyle: const TextStyle(color: Color(0xFF999999)),
                     prefixIcon: const Icon(
                       Icons.search,
@@ -210,9 +212,9 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
-                            'Not sure which service?',
+                            l.notSureService,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -221,7 +223,7 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Our experts can help you choose',
+                            l.expertsCanHelp,
                             style: TextStyle(
                               fontSize: 12,
                               color: Color(0xFF1976D2),
@@ -237,7 +239,7 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
 
               // Section Header
               Text(
-                searchQuery.isEmpty ? 'All Services' : 'Search Results',
+                searchQuery.isEmpty ? l.allServices : l.searchResults,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -252,7 +254,7 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
                     child: Padding(
                       padding: const EdgeInsets.all(32.0),
                       child: Column(
-                        children: const [
+                        children: [
                           Icon(
                             Icons.search_off,
                             size: 64,
@@ -260,7 +262,7 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
                           ),
                           SizedBox(height: 16),
                           Text(
-                            'No services found',
+                            l.noServicesFound,
                             style: TextStyle(
                               fontSize: 16,
                               color: Color(0xFF666666),
@@ -293,6 +295,7 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
   }
 
   Widget _buildSubcategoryCard(BuildContext context, Subcategory subcategory) {
+    final l = AppLocalizations.of(context);
     return InkWell(
       onTap: () => _onSubcategoryTap(context, subcategory),
       borderRadius: BorderRadius.circular(12),
@@ -351,9 +354,9 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'Popular',
-                    style: TextStyle(
+                  child: Text(
+                    l.popular,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -371,7 +374,9 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
     // Navigate to service details or technician list
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Opening ${subcategory.name}...'),
+        content: Text(
+          '${AppLocalizations.of(context).openingItem} ${subcategory.name}...',
+        ),
         behavior: SnackBarBehavior.floating,
       ),
     );

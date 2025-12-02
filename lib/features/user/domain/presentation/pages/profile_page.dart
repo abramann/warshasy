@@ -1,110 +1,126 @@
-// ============================================
-// 1. PROFILE PAGE (View User Profile)
-// lib/features/user/presentation/pages/profile_page.dart
-// ============================================
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:warshasy/core/config/injection_container.dart';
+import 'package:warshasy/core/presentation/widgets/base_page.dart';
+import 'package:warshasy/core/theme/app_borders.dart';
+import 'package:warshasy/core/utils/injection_container.dart';
+import 'package:warshasy/core/theme/app_colors.dart';
+import 'package:warshasy/core/theme/app_shadows.dart';
 import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
+import 'package:warshasy/features/home/presentation/widgets/custom_scaffold.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
 import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart';
 
 class ProfilePage extends StatefulWidget {
   final String? userId;
 
+  const ProfilePage({super.key, this.userId});
+
   @override
   State<StatefulWidget> createState() => ProfilePageState();
-
-  const ProfilePage({super.key, this.userId});
 }
 
 class ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
-    // Determine if viewing own profile or another user's profile
-    String targetUserId;
-    String currentUserId =
+    final currentUserId =
         (BlocProvider.of<AuthBloc>(context).state as Authenticated)
             .session
             .userId;
 
-    late final bool isOwnProfile;
-    if (widget.userId != null) {
-      targetUserId = widget.userId!;
-      isOwnProfile = false;
-    } else {
-      targetUserId = currentUserId;
-      isOwnProfile = true;
-    }
+    final targetUserId = widget.userId ?? currentUserId;
+    final isOwnProfile = widget.userId == null;
 
     return BlocProvider(
       create:
           (context) =>
               sl<UserBloc>()..add(LoadUserRequested(userId: targetUserId)),
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(isOwnProfile ? 'ملفي الشخصي' : 'الملف الشخصي'),
-          actions:
-              isOwnProfile
-                  ? [
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () => context.push('/profile/profile-setup'),
-                      tooltip: 'تعديل الملف الشخصي',
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.settings),
-                      onPressed: () => context.push('/settings'),
-                      tooltip: 'الإعدادات',
-                    ),
-                  ]
-                  : null,
+      child: BasePage(
+        child: CustomerScaffold(
+          appBar: _buildAppBar(context, isOwnProfile),
+          body: BlocBuilder<UserBloc, UserState>(
+            builder: (context, state) {
+              if (state is UserLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (state is UserLoaded) {
+                return _ProfileContent(
+                  user: state.user,
+                  isOwnProfile: isOwnProfile,
+                );
+              }
+
+              if (state is UserError) {
+                return _buildErrorState(context, state, targetUserId);
+              }
+
+              return const SizedBox.shrink();
+            },
+          ),
         ),
-        body: BlocBuilder<UserBloc, UserState>(
-          builder: (context, state) {
-            if (state is UserLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+      ),
+    );
+  }
 
-            if (state is UserLoaded) {
-              return _ProfileContent(
-                user: state.user,
-                isOwnProfile: isOwnProfile,
-              );
-            }
+  PreferredSizeWidget _buildAppBar(BuildContext context, bool isOwnProfile) {
+    final theme = Theme.of(context);
 
-            if (state is UserError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 60,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(state.failure.message, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        context.read<UserBloc>().add(
-                          LoadUserRequested(userId: targetUserId),
-                        );
-                      },
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('إعادة المحاولة'),
-                    ),
-                  ],
+    return AppBar(
+      title: Text(isOwnProfile ? 'ملفي الشخصي' : 'الملف الشخصي'),
+      actions:
+          isOwnProfile
+              ? [
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => context.push('/profile/profile-setup'),
+                  tooltip: 'تعديل الملف الشخصي',
                 ),
-              );
-            }
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  onPressed: () => context.push('/settings'),
+                  tooltip: 'الإعدادات',
+                ),
+              ]
+              : null,
+    );
+  }
 
-            return const SizedBox.shrink();
-          },
+  Widget _buildErrorState(
+    BuildContext context,
+    UserError state,
+    String targetUserId,
+  ) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 60, color: AppColors.error),
+            const SizedBox(height: 16),
+            Text(
+              state.failure.message,
+              style: textTheme.bodyLarge?.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                context.read<UserBloc>().add(
+                  LoadUserRequested(userId: targetUserId),
+                );
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('إعادة المحاولة'),
+            ),
+          ],
         ),
       ),
     );
@@ -131,25 +147,14 @@ class _ProfileContent extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
-            // Header Section
             _buildHeader(context),
-
-            const Divider(height: 1),
-
-            // Info Section
+            const SizedBox(height: 8),
             _buildInfoSection(context),
-
-            const Divider(height: 1),
-
-            // Bio Section
             if (user.bio != null && user.bio!.isNotEmpty)
               _buildBioSection(context),
-
-            // Services Section (if user offers services)
             _buildServicesSection(context),
-
-            // Actions Section
             if (!isOwnProfile) _buildActionsSection(context),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -157,40 +162,53 @@ class _ProfileContent extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Container(
       padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: theme.cardTheme.color),
       child: Column(
         children: [
-          // Avatar
           Stack(
             children: [
-              CircleAvatar(
-                radius: 60,
-                backgroundColor: Colors.grey.shade200,
-                backgroundImage:
-                    user.avatarUrl != null
-                        ? NetworkImage(user.avatarUrl!)
-                        : null,
-                child:
-                    user.avatarUrl == null
-                        ? Icon(
-                          Icons.person,
-                          size: 60,
-                          color: Colors.grey.shade400,
-                        )
-                        : null,
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: AppShadows.soft,
+                ),
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundColor: AppColors.surface,
+                  backgroundImage:
+                      user.avatarUrl != null
+                          ? NetworkImage(user.avatarUrl!)
+                          : null,
+                  child:
+                      user.avatarUrl == null
+                          ? Icon(
+                            Icons.person,
+                            size: 60,
+                            color: AppColors.textTertiary,
+                          )
+                          : null,
+                ),
               ),
               if (isOwnProfile)
                 Positioned(
                   bottom: 0,
                   right: 0,
-                  child: CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Theme.of(context).primaryColor,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primary,
+                      boxShadow: AppShadows.subtle,
+                    ),
                     child: IconButton(
                       icon: const Icon(Icons.camera_alt, size: 18),
                       color: Colors.white,
-                      padding: EdgeInsets.zero,
+                      padding: const EdgeInsets.all(8),
+                      constraints: const BoxConstraints(),
                       onPressed: () => _showAvatarOptions(context),
                     ),
                   ),
@@ -198,24 +216,20 @@ class _ProfileContent extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-
-          // Name
           Text(
             user.fullName,
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            style: textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
             textAlign: TextAlign.center,
           ),
-
           const SizedBox(height: 8),
-
-          // Account Age
           Text(
             'عضو منذ ${_formatDate(user.createdAt)}',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+            style: textTheme.bodySmall?.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -223,65 +237,94 @@ class _ProfileContent extends StatelessWidget {
   }
 
   Widget _buildInfoSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardTheme.color,
+        borderRadius: BorderRadius.circular(AppRadius.large),
+        boxShadow: AppShadows.soft,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'معلومات الاتصال',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 16),
-
-          // Phone
           _InfoRow(
             icon: Icons.phone,
             label: 'رقم الهاتف',
             value: user.phone,
             onTap: isOwnProfile ? null : () => _callUser(context),
           ),
-
-          const SizedBox(height: 12),
-
-          // City
-          if (user.city != null)
+          if (user.city != null) ...[
+            const SizedBox(height: 12),
             _InfoRow(
               icon: Icons.location_on,
               label: 'المدينة',
               value: user.city!.name,
             ),
+          ],
         ],
       ),
     );
   }
 
   Widget _buildBioSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardTheme.color,
+        borderRadius: BorderRadius.circular(AppRadius.large),
+        boxShadow: AppShadows.soft,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'نبذة',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 12),
-          Text(user.bio!, style: Theme.of(context).textTheme.bodyMedium),
+          Text(
+            user.bio!,
+            style: textTheme.bodyMedium?.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.6,
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildServicesSection(BuildContext context) {
-    // TODO: Fetch user services
-    // For now, show placeholder
-    return Padding(
-      padding: const EdgeInsets.all(16),
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardTheme.color,
+        borderRadius: BorderRadius.circular(AppRadius.large),
+        boxShadow: AppShadows.soft,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -290,24 +333,45 @@ class _ProfileContent extends StatelessWidget {
             children: [
               Text(
                 'الخدمات المقدمة',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
               ),
               if (isOwnProfile)
                 TextButton.icon(
                   onPressed: () => context.push('/services/add'),
-                  icon: const Icon(Icons.add),
-                  label: const Text('إضافة خدمة'),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('إضافة'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                  ),
                 ),
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            'لا توجد خدمات حالياً',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(AppRadius.medium),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: AppColors.textTertiary,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'لا توجد خدمات حالياً',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -316,7 +380,7 @@ class _ProfileContent extends StatelessWidget {
 
   Widget _buildActionsSection(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
           ElevatedButton.icon(
@@ -324,7 +388,7 @@ class _ProfileContent extends StatelessWidget {
             icon: const Icon(Icons.message),
             label: const Text('إرسال رسالة'),
             style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
+              minimumSize: const Size(double.infinity, 50),
             ),
           ),
           const SizedBox(height: 12),
@@ -333,7 +397,9 @@ class _ProfileContent extends StatelessWidget {
             icon: const Icon(Icons.phone),
             label: const Text('اتصال هاتفي'),
             style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 48),
+              minimumSize: const Size(double.infinity, 50),
+              side: const BorderSide(color: AppColors.primary),
+              foregroundColor: AppColors.primary,
             ),
           ),
         ],
@@ -342,59 +408,121 @@ class _ProfileContent extends StatelessWidget {
   }
 
   void _showAvatarOptions(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     showModalBottomSheet(
       context: context,
+      backgroundColor: theme.cardTheme.color,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder:
           (context) => SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.camera_alt),
-                  title: const Text('التقاط صورة'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Implement camera capture
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text('اختيار من المعرض'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    // TODO: Implement gallery picker
-                  },
-                ),
-                if (user.avatarUrl != null)
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.textTertiary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                   ListTile(
-                    leading: const Icon(Icons.delete, color: Colors.red),
-                    title: const Text(
-                      'حذف الصورة',
-                      style: TextStyle(color: Colors.red),
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(AppRadius.small),
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    title: Text(
+                      'التقاط صورة',
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     onTap: () {
                       Navigator.pop(context);
-                      context.read<UserBloc>().add(
-                        DeleteAvatarRequested(userId: user.phone),
-                      );
+                      // TODO: Implement camera capture
                     },
                   ),
-              ],
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.info.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(AppRadius.small),
+                      ),
+                      child: const Icon(
+                        Icons.photo_library,
+                        color: AppColors.info,
+                      ),
+                    ),
+                    title: Text(
+                      'اختيار من المعرض',
+                      style: textTheme.bodyLarge?.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: Implement gallery picker
+                    },
+                  ),
+                  if (user.avatarUrl != null)
+                    ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(AppRadius.small),
+                        ),
+                        child: const Icon(Icons.delete, color: AppColors.error),
+                      ),
+                      title: Text(
+                        'حذف الصورة',
+                        style: textTheme.bodyLarge?.copyWith(
+                          color: AppColors.error,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        context.read<UserBloc>().add(
+                          DeleteAvatarRequested(userId: user.phone),
+                        );
+                      },
+                    ),
+                ],
+              ),
             ),
           ),
     );
   }
 
   void _contactUser(BuildContext context) {
-    // TODO: Navigate to chat
     context.push('/chat/${user.phone}');
   }
 
   void _callUser(BuildContext context) {
-    // TODO: Implement phone call
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('الاتصال بـ ${user.phone}')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('الاتصال بـ ${user.phone}'),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+        ),
+      ),
+    );
   }
 
   String _formatDate(DateTime date) {
@@ -430,38 +558,54 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final child = Row(
-      children: [
-        Icon(icon, size: 20, color: Colors.grey.shade600),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 2),
-              Text(value, style: Theme.of(context).textTheme.bodyLarge),
-            ],
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    final child = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(AppRadius.small),
+            ),
+            child: Icon(icon, size: 20, color: AppColors.primary),
           ),
-        ),
-        if (onTap != null)
-          Icon(Icons.chevron_right, color: Colors.grey.shade400),
-      ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (onTap != null)
+            Icon(Icons.chevron_left, color: AppColors.textTertiary),
+        ],
+      ),
     );
 
     if (onTap != null) {
       return InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-          child: child,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        child: child,
       );
     }
 

@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import 'package:warshasy/features/auth/auth.dart';
 import '../../../../core/network/network.dart';
-import '../../../../core/config/injection_container.dart';
+import '../../../../core/utils/injection_container.dart';
 import '../models/user_model.dart';
 
 abstract class UserRemoteDataSource {
@@ -45,11 +45,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   Future<UserModel> getUserById(String userId) async {
     return await network.guard(() async {
       final response =
-          await supabaseClient
-              .from('users')
-              .select()
-              .eq('phone', userId)
-              .single();
+          await supabaseClient.from('users').select().eq('id', userId).single();
       return UserModel.fromJson(response);
     });
   }

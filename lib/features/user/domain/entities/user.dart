@@ -1,4 +1,4 @@
-// This represents what a User IS in your app (business logic)
+// This represents what a User IS in app (business logic)
 // Think of it as a blueprint/contract
 
 import 'package:equatable/equatable.dart';

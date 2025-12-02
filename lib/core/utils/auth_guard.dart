@@ -2,7 +2,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:warshasy/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:warshasy/core/config/app_routes.dart';
+import 'package:warshasy/core/route/app_routes.dart';
 
 class AuthGuard {
   final AuthBloc authBloc;

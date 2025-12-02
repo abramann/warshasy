@@ -23,7 +23,7 @@ import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart'
 // DEPENDENCY INJECTION - PRODUCTS MODULE
 // lib/injection_container.dart
 // ============================================
-// Update your existing injection_container.dart file
+// Update existing injection_container.dart file
 // Add Products dependencies to the existing Auth dependencies
 
 // Auth imports (existing)
@@ -174,7 +174,7 @@ Register from bottom to top (dependencies first):
 4. Use Cases ← Needs Repositories
 5. BLoCs ← Needs Use Cases
 
-If you register in wrong order, you get error:
+If register in wrong order, will get error:
 "Object/factory with type X is not registered"
 
 ═══════════════════════════════════════════════════════════════
@@ -191,7 +191,7 @@ WHY USE DEPENDENCY INJECTION?
 USING DEPENDENCY INJECTION:
 ═══════════════════════════════════════════════════════════════
 
-In your pages/widgets:
+In the pages/widgets:
 
 // Get BLoC
 final productsBloc = sl<ProductsBloc>();

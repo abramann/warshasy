@@ -1,10 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:warshasy/core/config/config.dart';
 import 'package:warshasy/core/errors/errors.dart';
-import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 import 'package:warshasy/features/user/domain/entities/city.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
 import 'package:warshasy/features/user/domain/repositories/user_repository.dart';

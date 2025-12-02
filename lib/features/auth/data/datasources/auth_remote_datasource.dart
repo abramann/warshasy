@@ -8,12 +8,12 @@
 import 'dart:math';
 
 import 'package:warshasy/core/network/network.dart';
-import 'package:warshasy/core/config/auth_config.dart';
+import 'package:warshasy/core/env/call_me_bot.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 import 'package:warshasy/features/user/data/models/user_model.dart';
 import 'package:warshasy/features/user/domain/entities/city.dart';
 import '../../../../core/errors/errors.dart';
-import 'package:warshasy/core/config/injection_container.dart';
+import 'package:warshasy/core/utils/injection_container.dart';
 import 'package:http/http.dart' as http;
 import 'package:warshasy/features/user/domain/entities/user.dart' as Warsha;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -129,7 +129,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
             .maybeSingle();
 
     if (otpRow == null) {
-      throw Exception('Invalid or expired code'); // map to your Failure later
+      throw Exception('Invalid or expired code'); // map to a Failure later
     }
 
     // 2) Mark OTP as used
@@ -206,7 +206,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   String _generateSessionToken() {
-    // simplest: just reuse your OTP generator with longer digits
     // In prod, use secure random bytes / uuid package
     final rand = Random.secure();
     final buffer = StringBuffer();
@@ -239,7 +238,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       'expires_at': expiresAt.toIso8601String(),
     });
 
-    // 3) Send via WhatsApp (you already have this)
+    // 3) Send via WhatsApp
     // await _sendWhatsAppOtp(phone, otp);
   }
 

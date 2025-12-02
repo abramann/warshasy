@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:warshasy/core/localization/localization.dart';
 
 class TryAgainPage extends StatelessWidget {
   final String? message;
@@ -18,11 +19,14 @@ class TryAgainPage extends StatelessWidget {
             children: [
               const Icon(Icons.wifi_off, size: 64),
               const SizedBox(height: 16),
-              Text(message ?? 'Error', textAlign: TextAlign.center),
+              Text(
+                message ?? AppLocalizations.of(context).error,
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: onPressedTryAgain,
-                child: const Text('Try Again'),
+                child: Text(AppLocalizations.of(context).tryAgain),
               ),
             ],
           ),

@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:warshasy/core/config/app_routes.dart';
+import 'package:warshasy/core/localization/localization.dart';
+import 'package:warshasy/core/presentation/widgets/base_page.dart';
+import 'package:warshasy/core/route/app_routes.dart';
+import 'package:warshasy/core/theme/app_borders.dart';
+import 'package:warshasy/core/theme/app_colors.dart';
+import 'package:warshasy/core/theme/app_shadows.dart';
+import 'package:warshasy/core/theme/app_gradients.dart';
 import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
+import 'package:warshasy/features/home/presentation/widgets/common_widgets.dart';
+import 'package:warshasy/features/home/presentation/widgets/custom_scaffold.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -18,280 +26,47 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
     final isTablet = MediaQuery.of(context).size.width > 600;
+    final l = AppLocalizations.of(context);
+
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        bool _isLoading = false;
+        final isLoading = state is AuthLoading;
+
         if (state is Authenticated) {
           authSession = state.session;
-        } else if (state is AuthLoading) {
-          _isLoading = true;
-          authSession = null;
         } else {
           authSession = null;
         }
+
         selectedCity = authSession?.city?.arabicName ?? selectedCity;
 
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: Scaffold(
-            backgroundColor: const Color(0xFFFAFAFA),
-            appBar: AppBar(
-              title: const Text(
-                'تك فيكس',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-              ),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.account_circle_outlined),
-                  onPressed: () {
-                    context.push('/profile');
-                  },
-                ),
-                if (authSession != null) ...[
-                  IconButton(
-                    icon: const Icon(Icons.notifications_outlined),
-                    onPressed: () {},
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.logout_outlined),
-                    onPressed: () {
-                      context.read<AuthBloc>().add(SignOutRequested());
-                    },
-                  ),
-                ],
-              ],
-
-              flexibleSpace: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color.fromARGB(255, 84, 173, 247),
-                      Color.fromARGB(255, 84, 173, 247),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-              ),
-              elevation: 2,
-            ),
+          child: CustomerScaffold(
+            appBar: CommonWidgets.buildDefaultAppBar(context),
             body: SingleChildScrollView(
               child: Padding(
                 padding: EdgeInsets.all(isTablet ? 24.0 : 20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Welcome Section
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _isLoading
-                                  ? CircularProgressIndicator()
-                                  : Text(
-                                    'أهلا وسهلا ! 👋 ${authSession?.fullName ?? ''}',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF333333),
-                                    ),
-                                  ),
-                              SizedBox(height: 8),
-                              Text(
-                                'ما هي الخدمة التي تحتاجها اليوم؟',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF666666),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 12), // a little space before the button
-                        if (authSession != null)
-                          ElevatedButton(
-                            onPressed: () {
-                              context.pushNamed(AppRouteName.postService);
-                            },
-                            child: Text('اعرض خدمة'),
-                          )
-                        else
-                          _isLoading
-                              ? CircularProgressIndicator()
-                              : ElevatedButton(
-                                onPressed: () {
-                                  context.pushNamed(AppRouteName.login);
-                                },
-                                child: Text('أعلن عن نفسك'),
-                              ),
-                      ],
+                    _buildWelcomeSection(
+                      context,
+                      isLoading,
+                      textTheme,
+                      isTablet,
                     ),
                     const SizedBox(height: 20),
-
-                    // Search Bar
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: TextField(
-                        textDirection: TextDirection.rtl,
-                        decoration: InputDecoration(
-                          hintText: 'ابحث عن خدمة...',
-                          hintStyle: const TextStyle(color: Color(0xFF999999)),
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            color: Color(0xFF999999),
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
-                        ),
-                        onTap: () {
-                          // Navigate to search screen
-                        },
-                      ),
-                    ),
+                    _buildSearchBar(context),
                     const SizedBox(height: 20),
-
-                    // Location Selector
-                    InkWell(
-                      onTap: () => _showCityBottomSheet(context),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.location_on,
-                                  color: Color(0xFF667eea),
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  selectedCity,
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
-                                    color: Color(0xFF333333),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Icon(
-                              Icons.keyboard_arrow_down,
-                              color: Color(0xFF999999),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    _buildLocationSelector(context),
                     const SizedBox(height: 24),
-
-                    // Section Header
-                    const Text(
-                      'اختر خدمتك',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF333333),
-                      ),
-                    ),
+                    _buildSectionHeader(textTheme),
                     const SizedBox(height: 16),
-
-                    // Category Grid
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        return GridView.count(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: isTablet ? 3 : 1,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          childAspectRatio: isTablet ? 0.85 : 1.4,
-                          children: [
-                            _buildCategoryCard(
-                              context: context,
-                              title: 'الحرف اليدوية',
-                              description:
-                                  'تمديد كهرباء وصحية , نجارة وحدادة وغيرها',
-                              icon: 'assets/icons/crafts.png',
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFFF6B35), Color(0xFFFF8C61)],
-                              ),
-                              borderColor: const Color(0xFFFF6B35),
-                              onTap:
-                                  () => _navigateToSubcategory(
-                                    context,
-                                    'الحرف اليدوية',
-                                  ),
-                            ),
-                            _buildCategoryCard(
-                              context: context,
-                              title: 'الخدمات التقنية',
-                              description: 'الكترونيات , طاقة بديلة وشبكات',
-                              icon: 'assets/icons/technical.png',
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF4A90E2), Color(0xFF6BA8F0)],
-                              ),
-                              borderColor: const Color(0xFF4A90E2),
-                              onTap:
-                                  () => _navigateToSubcategory(
-                                    context,
-                                    'الخدمات التقنية',
-                                  ),
-                            ),
-                            _buildCategoryCard(
-                              context: context,
-                              title: 'التنظيف والخدمات المنزلية',
-                              description:
-                                  ' تنظيف منازل وأسطح , تنجيد ونقل أثاث وغيرها',
-                              icon: 'assets/icons/cleaning.png',
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF50C878), Color(0xFF72D893)],
-                              ),
-                              borderColor: const Color(0xFF50C878),
-                              onTap:
-                                  () => _navigateToSubcategory(
-                                    context,
-                                    'التنظيف والخدمات المنزلية',
-                                  ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
+                    _buildCategoryGrid(context, isTablet),
                   ],
                 ),
               ),
@@ -299,6 +74,165 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildWelcomeSection(
+    BuildContext context,
+    bool isLoading,
+    TextTheme textTheme,
+    bool isTablet,
+  ) {
+    final l = AppLocalizations.of(context);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isLoading)
+                const CircularProgressIndicator()
+              else
+                Text(
+                  '${l.welcomeGreeting} ${authSession?.fullName ?? ''}',
+                  style: textTheme.titleLarge?.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              const SizedBox(height: 8),
+              Text(
+                l.homeServicePrompt,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        if (authSession != null)
+          ElevatedButton(
+            onPressed: () => context.pushNamed(AppRouteName.postService),
+            child: Text(l.homePostService),
+          )
+        else if (isLoading)
+          const CircularProgressIndicator()
+        else
+          ElevatedButton(
+            onPressed: () => context.pushNamed(AppRouteName.login),
+            child: Text(l.homeLoginCta),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSearchBar(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        boxShadow: AppShadows.subtle,
+      ),
+      child: TextField(
+        textDirection: TextDirection.rtl,
+        decoration: InputDecoration(
+          hintText: context.string('searchHint'),
+          prefixIcon: Icon(Icons.search, color: AppColors.textTertiary),
+        ),
+        onTap: () {
+          // TODO: Navigate to search screen
+        },
+      ),
+    );
+  }
+
+  Widget _buildLocationSelector(BuildContext context) {
+    return InkWell(
+      onTap: () => _showCityBottomSheet(context),
+      borderRadius: BorderRadius.circular(AppRadius.medium),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          boxShadow: AppShadows.subtle,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.location_on,
+                  color: AppColors.accent,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  selectedCity,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            Icon(Icons.keyboard_arrow_down, color: AppColors.textTertiary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(TextTheme textTheme) {
+    return Text(
+      AppLocalizations.of(context).homeSectionTitle,
+      style: textTheme.titleMedium?.copyWith(color: AppColors.textPrimary),
+    );
+  }
+
+  Widget _buildCategoryGrid(BuildContext context, bool isTablet) {
+    final l = AppLocalizations.of(context);
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: isTablet ? 3 : 1,
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      childAspectRatio: isTablet ? 0.85 : 1.4,
+      children: [
+        _buildCategoryCard(
+          context: context,
+          title: l.categoryCraftsTitle,
+          description: l.categoryCraftsDesc,
+          icon: 'assets/icons/crafts.png',
+          gradient: AppGradients.craft,
+          borderColor: AppColors.craftGradient.first,
+          onTap: () => _navigateToSubcategory(context, l.categoryCraftsTitle),
+        ),
+        _buildCategoryCard(
+          context: context,
+          title: l.categoryTechnicalTitle,
+          description: l.categoryTechnicalDesc,
+          icon: 'assets/icons/technical.png',
+          gradient: AppGradients.technical,
+          borderColor: AppColors.technicalGradient.first,
+          onTap:
+              () => _navigateToSubcategory(context, l.categoryTechnicalTitle),
+        ),
+        _buildCategoryCard(
+          context: context,
+          title: l.categoryCleaningTitle,
+          description: l.categoryCleaningDesc,
+          icon: 'assets/icons/cleaning.png',
+          gradient: AppGradients.cleaning,
+          borderColor: AppColors.cleaningGradient.first,
+          onTap: () => _navigateToSubcategory(context, l.categoryCleaningTitle),
+        ),
+      ],
     );
   }
 
@@ -311,47 +245,37 @@ class _HomePageState extends State<HomePage> {
     required Color borderColor,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
     final isTablet = MediaQuery.of(context).size.width > 600;
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.large),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: theme.cardTheme.color,
+          borderRadius: BorderRadius.circular(AppRadius.large),
+          boxShadow: AppShadows.soft,
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.large),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
                 width: isTablet ? 150 : 130,
                 height: isTablet ? 150 : 130,
-                decoration: BoxDecoration(
-                  //color: borderColor.withOpacity(0.08),
-                  shape: BoxShape.rectangle,
-                ),
                 padding: const EdgeInsets.all(16),
                 child: Image.asset(icon, fit: BoxFit.contain),
               ),
               SizedBox(height: isTablet ? 16 : 12),
-              // Title
               Flexible(
                 child: Text(
                   title,
-                  style: TextStyle(
-                    fontSize: isTablet ? 18 : 16,
+                  style: textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF333333),
+                    color: AppColors.textPrimary,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -359,12 +283,10 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 4),
-              // Service Count
               Text(
                 description,
-                style: TextStyle(
-                  fontSize: isTablet ? 13 : 12,
-                  color: const Color(0xFF999999),
+                style: textTheme.labelSmall?.copyWith(
+                  color: AppColors.textTertiary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -377,6 +299,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _showCityBottomSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -384,39 +309,50 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder:
-          (context) => Directionality(
-            textDirection: TextDirection.rtl,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'اختر مدينتك',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 20),
-                  ...City.values.toList().map(
-                    (city) => ListTile(
-                      leading: const Icon(Icons.location_city),
-                      title: Text(city.arabicName),
-                      trailing:
-                          selectedCity == city.arabicName
-                              ? const Icon(
-                                Icons.check,
-                                color: Color(0xFF667eea),
-                              )
-                              : null,
-                      onTap: () {
-                        setState(() {
-                          selectedCity = city.arabicName;
-                        });
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ),
-                ],
+          (context) => BasePage(
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: 20 + MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: DraggableScrollableSheet(
+                expand: false,
+                initialChildSize: 0.6,
+                minChildSize: 0.4,
+                maxChildSize: 0.9,
+                builder: (context, scrollController) {
+                  return ListView(
+                    controller: scrollController,
+                    children: [
+                      Text(
+                        context.string('chooseCity'),
+                        style: textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      ...City.values.map(
+                        (city) => ListTile(
+                          leading: const Icon(Icons.location_city),
+                          title: Text(city.arabicName),
+                          trailing:
+                              selectedCity == city.arabicName
+                                  ? const Icon(
+                                    Icons.check,
+                                    color: AppColors.accent,
+                                  )
+                                  : null,
+                          onTap: () {
+                            setState(() => selectedCity = city.arabicName);
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ),
@@ -426,7 +362,9 @@ class _HomePageState extends State<HomePage> {
   void _navigateToSubcategory(BuildContext context, String category) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('جاري فتح خدمات $category...'),
+        content: Text(
+          '${AppLocalizations.of(context).openingCategory} $category...',
+        ),
         behavior: SnackBarBehavior.floating,
       ),
     );

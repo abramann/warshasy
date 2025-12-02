@@ -6,10 +6,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:warshasy/core/config/config.dart';
+import 'package:warshasy/core/presentation/widgets/base_page.dart';
 import 'package:warshasy/core/storage/repository/local_storage_reposotory.dart';
+import 'package:warshasy/core/utils/injection_container.dart';
 import 'package:warshasy/features/auth/auth.dart';
-import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart';
 
 class ProfileSetupPage extends StatefulWidget {
@@ -69,148 +69,155 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
       child: Builder(
         builder:
-            (innerContext) => Scaffold(
-              appBar: AppBar(
-                title: const Text('تعديل الملف الشخصي'),
-                actions: [
-                  TextButton(
-                    onPressed: () => _saveProfile(innerContext),
-                    child: const Text('حفظ', style: TextStyle(fontSize: 16)),
-                  ),
-                ],
-              ),
-              body: BlocListener<UserBloc, UserState>(
-                listener: (context, state) {
-                  if (state is UserLoaded) {
-                    setState(() {
-                      setUser(state.user);
-                      _isLoading = false;
-                    });
-                  } else if (state is UserLoading)
-                    setState(() {
-                      if (!_isLoading)
-                        _isSaving = true;
-                      else
-                        _isLoading = true;
-                    });
-                  else if (state is UserUpdated) {
-                    final storage = sl<LocalStorageRepository>();
-                    storage.saveUser(state.user);
-                    context.pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('تم تحديث البيانات')),
-                    );
-                  } else {
-                    setState(() {
-                      _isLoading = false;
-                      _isSaving = false;
-                    });
-                  }
-                },
-                child:
-                    _isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : Form(
-                          key: _formKey,
-                          child: ListView(
-                            padding: const EdgeInsets.all(16),
-                            children: [
-                              // Avatar Section
-                              _buildAvatarSection(),
+            (innerContext) => BasePage(
+              child: Scaffold(
+                appBar: AppBar(
+                  title: const Text('تعديل الملف الشخصي'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => _saveProfile(innerContext),
+                      child: const Text('حفظ', style: TextStyle(fontSize: 16)),
+                    ),
+                  ],
+                ),
+                body: BlocListener<UserBloc, UserState>(
+                  listener: (context, state) {
+                    if (state is UserLoaded) {
+                      setState(() {
+                        setUser(state.user);
+                        _isLoading = false;
+                      });
+                    } else if (state is UserLoading)
+                      setState(() {
+                        if (!_isLoading)
+                          _isSaving = true;
+                        else
+                          _isLoading = true;
+                      });
+                    else if (state is UserUpdated) {
+                      final storage = sl<LocalStorageRepository>();
+                      storage.saveUser(state.user);
+                      context.pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('تم تحديث البيانات')),
+                      );
+                    } else {
+                      setState(() {
+                        _isLoading = false;
+                        _isSaving = false;
+                      });
+                    }
+                  },
+                  child:
+                      _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : Form(
+                            key: _formKey,
+                            child: ListView(
+                              padding: const EdgeInsets.all(16),
+                              children: [
+                                // Avatar Section
+                                _buildAvatarSection(),
 
-                              const SizedBox(height: 32),
+                                const SizedBox(height: 32),
 
-                              // Name Field
-                              TextFormField(
-                                controller: _nameController,
-                                decoration: const InputDecoration(
-                                  labelText: 'الاسم الكامل *',
-                                  hintText: 'أدخل اسمك الكامل',
-                                  prefixIcon: Icon(Icons.person),
-                                  border: OutlineInputBorder(),
+                                // Name Field
+                                TextFormField(
+                                  controller: _nameController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'الاسم الكامل *',
+                                    hintText: 'أدخل اسمك الكامل',
+                                    prefixIcon: Icon(Icons.person),
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'الرجاء إدخال الاسم';
+                                    }
+                                    if (value.trim().length < 3) {
+                                      return 'الاسم يجب أن يكون 3 أحرف على الأقل';
+                                    }
+                                    return null;
+                                  },
+                                  enabled: !_isSaving,
+                                  textInputAction: TextInputAction.next,
                                 ),
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'الرجاء إدخال الاسم';
-                                  }
-                                  if (value.trim().length < 3) {
-                                    return 'الاسم يجب أن يكون 3 أحرف على الأقل';
-                                  }
-                                  return null;
-                                },
-                                enabled: !_isSaving,
-                                textInputAction: TextInputAction.next,
-                              ),
 
-                              const SizedBox(height: 16),
+                                const SizedBox(height: 16),
 
-                              // City Dropdown
-                              DropdownButtonFormField<City>(
-                                value: _selectedCity,
-                                decoration: const InputDecoration(
-                                  labelText: 'المدينة',
-                                  hintText: 'اختر مدينتك',
-                                  prefixIcon: Icon(Icons.location_city),
-                                  border: OutlineInputBorder(),
+                                // City Dropdown
+                                DropdownButtonFormField<City>(
+                                  value: _selectedCity,
+                                  decoration: const InputDecoration(
+                                    labelText: 'المدينة',
+                                    hintText: 'اختر مدينتك',
+                                    prefixIcon: Icon(Icons.location_city),
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  items:
+                                      City.values.map((city) {
+                                        return DropdownMenuItem(
+                                          value: city,
+                                          child: Text(city.arabicName),
+                                        );
+                                      }).toList(),
+                                  onChanged:
+                                      _isSaving
+                                          ? null
+                                          : (city) {
+                                            setState(
+                                              () => _selectedCity = city,
+                                            );
+                                          },
                                 ),
-                                items:
-                                    City.values.map((city) {
-                                      return DropdownMenuItem(
-                                        value: city,
-                                        child: Text(city.arabicName),
-                                      );
-                                    }).toList(),
-                                onChanged:
-                                    _isSaving
-                                        ? null
-                                        : (city) {
-                                          setState(() => _selectedCity = city);
-                                        },
-                              ),
 
-                              const SizedBox(height: 16),
+                                const SizedBox(height: 16),
 
-                              // Bio Field
-                              TextFormField(
-                                controller: _bioController,
-                                decoration: const InputDecoration(
-                                  labelText: 'نبذة عنك (اختياري)',
-                                  hintText: 'أخبر الآخرين عن نفسك...',
-                                  prefixIcon: Icon(Icons.info_outline),
-                                  border: OutlineInputBorder(),
-                                  alignLabelWithHint: true,
+                                // Bio Field
+                                TextFormField(
+                                  controller: _bioController,
+                                  decoration: const InputDecoration(
+                                    labelText: 'نبذة عنك (اختياري)',
+                                    hintText: 'أخبر الآخرين عن نفسك...',
+                                    prefixIcon: Icon(Icons.info_outline),
+                                    border: OutlineInputBorder(),
+                                    alignLabelWithHint: true,
+                                  ),
+                                  maxLines: 4,
+                                  maxLength: 500,
+                                  enabled: !_isSaving,
+                                  textInputAction: TextInputAction.done,
                                 ),
-                                maxLines: 4,
-                                maxLength: 500,
-                                enabled: !_isSaving,
-                                textInputAction: TextInputAction.done,
-                              ),
 
-                              const SizedBox(height: 24),
+                                const SizedBox(height: 24),
 
-                              // Save Button
-                              ElevatedButton(
-                                onPressed:
-                                    _isSaving
-                                        ? null
-                                        : () => _saveProfile(innerContext),
-                                style: ElevatedButton.styleFrom(
-                                  minimumSize: const Size(double.infinity, 48),
+                                // Save Button
+                                ElevatedButton(
+                                  onPressed:
+                                      _isSaving
+                                          ? null
+                                          : () => _saveProfile(innerContext),
+                                  style: ElevatedButton.styleFrom(
+                                    minimumSize: const Size(
+                                      double.infinity,
+                                      48,
+                                    ),
+                                  ),
+                                  child:
+                                      _isSaving
+                                          ? const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                          : const Text('حفظ التغييرات'),
                                 ),
-                                child:
-                                    _isSaving
-                                        ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                        : const Text('حفظ التغييرات'),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
+                ),
               ),
             ),
       ),
