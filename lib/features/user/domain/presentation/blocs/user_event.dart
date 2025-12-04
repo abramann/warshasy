@@ -5,39 +5,36 @@ abstract class UserEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-// Load user by ID
+// Load user by ID (with optional force refresh)
 class LoadUserRequested extends UserEvent {
   final String userId;
+  final bool forceRefresh;
 
-  LoadUserRequested({required this.userId});
+  LoadUserRequested({required this.userId, this.forceRefresh = false});
+
+  @override
+  List<Object?> get props => [userId, forceRefresh];
+}
+
+// Refresh user silently (without loading state)
+class RefreshUserRequested extends UserEvent {
+  final String userId;
+
+  RefreshUserRequested({required this.userId});
 
   @override
   List<Object?> get props => [userId];
 }
 
-// Update user profile
 class UpdateProfileRequested extends UserEvent {
-  final String userId;
-  final String fullName;
-  final String phone;
-  final City? city;
-  final String? avatarUrl;
-  final String? bio;
+  final User user;
 
-  UpdateProfileRequested({
-    required this.userId,
-    required this.fullName,
-    required this.phone,
-    this.city,
-    this.avatarUrl,
-    this.bio,
-  });
+  UpdateProfileRequested({required this.user});
 
   @override
-  List<Object?> get props => [userId, fullName, city, avatarUrl, bio];
+  List<Object?> get props => [user];
 }
 
-// Upload avatar
 class UploadAvatarRequested extends UserEvent {
   final String userId;
   final String filePath;
@@ -48,7 +45,6 @@ class UploadAvatarRequested extends UserEvent {
   List<Object?> get props => [userId, filePath];
 }
 
-// Delete avatar
 class DeleteAvatarRequested extends UserEvent {
   final String userId;
 
@@ -58,7 +54,6 @@ class DeleteAvatarRequested extends UserEvent {
   List<Object?> get props => [userId];
 }
 
-// Search users
 class SearchUsersRequested extends UserEvent {
   final String? query;
   final City? city;
@@ -70,15 +65,4 @@ class SearchUsersRequested extends UserEvent {
   List<Object?> get props => [query, city, limit];
 }
 
-// Check if phone exists
-class CheckPhoneExistsRequested extends UserEvent {
-  final String phone;
-
-  CheckPhoneExistsRequested({required this.phone});
-
-  @override
-  List<Object?> get props => [phone];
-}
-
-// Clear user data
 class ClearUserRequested extends UserEvent {}

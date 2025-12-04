@@ -16,8 +16,8 @@ class User extends Equatable {
   final String? avatarUrl;
   final String? bio;
   final bool isActive;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   const User({
     required this.id,
@@ -27,8 +27,8 @@ class User extends Equatable {
     this.avatarUrl,
     this.bio,
     this.isActive = true,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
   });
 
   @override

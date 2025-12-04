@@ -22,13 +22,7 @@ abstract class UserRepository {
   });
 
   /// Update user profile
-  Future<User> updateUser({
-    required String userId,
-    String? fullName,
-    City? city,
-    String? avatarUrl,
-    String? bio,
-  });
+  Future<User> updateUser({required User user});
 
   /// Upload user avatar
   Future<String> uploadAvatar({

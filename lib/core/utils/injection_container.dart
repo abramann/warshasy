@@ -89,8 +89,12 @@ void _initUser() {
     () => UserRepositoryImpl(remoteDataSource: sl()),
   );
 
-  // BLoC
-  sl.registerFactory(() => UserBloc(userRepository: sl()));
+  // BLoC - CHANGE FROM registerFactory to registerLazySingleton
+  // This ensures we have ONE instance that persists
+  sl.registerLazySingleton(() => UserBloc(userRepository: sl()));
+
+  // OLD (creates new instance every time):
+  // sl.registerFactory(() => UserBloc(userRepository: sl()));
 }
 
 // ============================================

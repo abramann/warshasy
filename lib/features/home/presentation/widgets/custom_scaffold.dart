@@ -23,15 +23,20 @@ class CustomerScaffold extends StatelessWidget {
               context.goNamed(AppRouteName.home);
               break;
             case 1:
-              context.goNamed(AppRouteName.chats);
+              context.goNamed(AppRouteName.home);
+              context.pushNamed(AppRouteName.chats);
               break;
             case 2:
-              context.goNamed(AppRouteName.profile);
+              context.goNamed(AppRouteName.home);
+              context.pushNamed(AppRouteName.profile);
               break;
           }
         },
         items: [
-          BottomNavigationBarItem(icon: const Icon(Icons.home), label: l.navHome),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.home),
+            label: l.navHome,
+          ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.chat),
             label: l.navChats,

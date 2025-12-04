@@ -7,17 +7,24 @@ abstract class UserState extends Equatable {
   List<Object?> get props => [];
 }
 
-// Initial state
 class UserInitial extends UserState {
   const UserInitial();
 }
 
-// Loading state
 class UserLoading extends UserState {
   const UserLoading();
 }
 
-// User loaded successfully
+// New state: Updating (shows user is being updated but keeps UI responsive)
+class UserUpdating extends UserState {
+  final User user; // Keep current user visible during update
+
+  const UserUpdating({required this.user});
+
+  @override
+  List<Object> get props => [user];
+}
+
 class UserLoaded extends UserState {
   final User user;
 
@@ -27,7 +34,6 @@ class UserLoaded extends UserState {
   List<Object> get props => [user];
 }
 
-// Multiple users loaded (for search)
 class UsersLoaded extends UserState {
   final List<User> users;
 
@@ -37,7 +43,6 @@ class UsersLoaded extends UserState {
   List<Object> get props => [users];
 }
 
-// User updated successfully
 class UserUpdated extends UserState {
   final User user;
 
@@ -47,32 +52,20 @@ class UserUpdated extends UserState {
   List<Object> get props => [user];
 }
 
-// Avatar uploaded successfully
 class AvatarUploaded extends UserState {
   final String avatarUrl;
+  final User user;
 
-  const AvatarUploaded({required this.avatarUrl});
+  const AvatarUploaded({required this.avatarUrl, required this.user});
 
   @override
-  List<Object> get props => [avatarUrl];
+  List<Object> get props => [avatarUrl, user];
 }
 
-// Avatar deleted successfully
 class AvatarDeleted extends UserState {
   const AvatarDeleted();
 }
 
-// Phone exists check result
-class PhoneExistsChecked extends UserState {
-  final bool exists;
-
-  const PhoneExistsChecked({required this.exists});
-
-  @override
-  List<Object> get props => [exists];
-}
-
-// Error state - Changed to use Failure instead of String message
 class UserError extends UserState {
   final Failure failure;
 

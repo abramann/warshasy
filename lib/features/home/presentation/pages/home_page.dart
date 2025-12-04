@@ -115,7 +115,7 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(width: 12),
         if (authSession != null)
           ElevatedButton(
-            onPressed: () => context.pushNamed(AppRouteName.postService),
+            onPressed: () => context.pushNamed(AppRouteName.addService),
             child: Text(l.homePostService),
           )
         else if (isLoading)

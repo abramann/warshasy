@@ -109,7 +109,7 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutePath.postService,
-        name: AppRouteName.postService,
+        name: AppRouteName.addService,
         builder: (context, state) {
           final l = AppLocalizations.of(context);
           // TODO: replace with real widget

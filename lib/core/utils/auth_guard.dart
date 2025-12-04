@@ -30,8 +30,8 @@ class AuthGuard {
     // Protected routes:
     if (!isLoggedIn) {
       // Save where they wanted to go, so we can maybe use it later
-      // final from = state.uri.toString();
-      // return '${AppRoutePath.login}?from=$from';
+      final from = state.uri.toString();
+      return '${AppRoutePath.login}?from=$from';
       return AppRoutePath.login;
     }
 

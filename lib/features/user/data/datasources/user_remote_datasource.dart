@@ -17,13 +17,7 @@ abstract class UserRemoteDataSource {
     City? city,
     String? bio,
   });
-  Future<UserModel> updateUser({
-    required String userId,
-    String? fullName,
-    City? city,
-    String? avatarUrl,
-    String? bio,
-  });
+  Future<UserModel> updateUser({required User user});
   Future<String> uploadAvatar({
     required String userId,
     required String filePath,
@@ -87,30 +81,29 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   }
 
   @override
-  Future<UserModel> updateUser({
-    required String userId,
-    String? fullName,
-    City? city,
-    String? avatarUrl,
-    String? bio,
-  }) async {
+  Future<UserModel> updateUser({required User user}) async {
     return await network.guard(() async {
       final updateData = <String, dynamic>{};
 
-      if (fullName != null) updateData['full_name'] = fullName;
+      final userId = user.id;
+      final fullName = user.fullName;
+      final phone = user.phone;
+      final city = user.city;
+      final avatarUrl = user.avatarUrl;
+      final bio = user.bio;
+      final updatedAt = user.updatedAt?.toIso8601String();
+      updateData['full_name'] = fullName;
+      updateData['phone'] = phone;
       if (city != null) updateData['city'] = city.arabicName;
       if (avatarUrl != null) updateData['avatar_url'] = avatarUrl;
       if (bio != null) updateData['bio'] = bio;
-
-      if (updateData.isEmpty) {
-        return await getUserById(userId);
-      }
+      if (updatedAt != null) updateData['updated_at'] = updatedAt;
 
       final response =
           await supabaseClient
               .from('users')
               .update(updateData)
-              .eq('phone', userId)
+              .eq('id', userId)
               .select()
               .single();
 

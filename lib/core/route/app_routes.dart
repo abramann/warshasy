@@ -13,7 +13,7 @@ class AppRouteName {
 
   // Services / actions
   static const requestService = 'request-service';
-  static const postService = 'post-service';
+  static const addService = 'add-service';
   static const serviceDetail = 'service-detail';
 
   // Chat

@@ -44,8 +44,8 @@ class UserModel extends User {
       'city': city?.arabicName,
       'avatar_url': avatarUrl,
       'bio': bio,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
     };
   }
 

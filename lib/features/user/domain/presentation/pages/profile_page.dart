@@ -1,13 +1,16 @@
+// ============================================
+// UPDATED profile_page.dart
+// ============================================
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:warshasy/core/presentation/widgets/base_page.dart';
+import 'package:warshasy/core/route/app_routes.dart';
 import 'package:warshasy/core/theme/app_borders.dart';
-import 'package:warshasy/core/utils/injection_container.dart';
 import 'package:warshasy/core/theme/app_colors.dart';
 import 'package:warshasy/core/theme/app_shadows.dart';
+import 'package:warshasy/core/utils/injection_container.dart';
 import 'package:warshasy/features/auth/auth.dart';
-import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 import 'package:warshasy/features/home/presentation/widgets/custom_scaffold.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
 import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart';
@@ -22,51 +25,72 @@ class ProfilePage extends StatefulWidget {
 }
 
 class ProfilePageState extends State<ProfilePage> {
+  late final _isOwnProfile;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Load user if viewing another profile
+    // For own profile, user is already loaded in warshasy.dart
+    final currentUserId = _getCurrentUserId(context);
+    final targetUserId = widget.userId ?? currentUserId;
+    sl<UserBloc>().add(LoadUserRequested(userId: targetUserId!));
+
+    _isOwnProfile = targetUserId == currentUserId;
+  }
+
+  String? _getCurrentUserId(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is Authenticated) {
+      return authState.session.userId;
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final currentUserId =
-        (BlocProvider.of<AuthBloc>(context).state as Authenticated)
-            .session
-            .userId;
+    return BasePage(
+      child: CustomerScaffold(
+        appBar: _buildAppBar(context, _isOwnProfile),
+        body: BlocBuilder<UserBloc, UserState>(
+          builder: (context, state) {
+            // Handle different states
+            if (state is UserLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-    final targetUserId = widget.userId ?? currentUserId;
-    final isOwnProfile = widget.userId == null;
+            if (state is UserLoaded) {
+              //if (state.user.id == targetUserId) {
+              return _ProfileContent(
+                user: state.user,
+                isOwnProfile: _isOwnProfile,
+              );
+              //}
+            }
 
-    return BlocProvider(
-      create:
-          (context) =>
-              sl<UserBloc>()..add(LoadUserRequested(userId: targetUserId)),
-      child: BasePage(
-        child: CustomerScaffold(
-          appBar: _buildAppBar(context, isOwnProfile),
-          body: BlocBuilder<UserBloc, UserState>(
-            builder: (context, state) {
-              if (state is UserLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
+            if (state is UserUpdating) {
+              // Show updating indicator while keeping UI responsive
+              return _ProfileContent(
+                user: state.user,
+                isOwnProfile: _isOwnProfile,
+                isUpdating: true,
+              );
+            }
 
-              if (state is UserLoaded) {
-                return _ProfileContent(
-                  user: state.user,
-                  isOwnProfile: isOwnProfile,
-                );
-              }
+            if (state is UserError) {
+              return _buildErrorState(context, state, state.failure.message);
+            }
 
-              if (state is UserError) {
-                return _buildErrorState(context, state, targetUserId);
-              }
-
-              return const SizedBox.shrink();
-            },
-          ),
+            // If no user loaded yet, show loading
+            return const Center(child: CircularProgressIndicator());
+          },
         ),
       ),
     );
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context, bool isOwnProfile) {
-    final theme = Theme.of(context);
-
     return AppBar(
       title: Text(isOwnProfile ? 'ملفي الشخصي' : 'الملف الشخصي'),
       actions:
@@ -92,8 +116,7 @@ class ProfilePageState extends State<ProfilePage> {
     UserError state,
     String targetUserId,
   ) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Center(
       child: Padding(
@@ -114,7 +137,7 @@ class ProfilePageState extends State<ProfilePage> {
             ElevatedButton.icon(
               onPressed: () {
                 context.read<UserBloc>().add(
-                  LoadUserRequested(userId: targetUserId),
+                  LoadUserRequested(userId: targetUserId, forceRefresh: true),
                 );
               },
               icon: const Icon(Icons.refresh),
@@ -130,34 +153,75 @@ class ProfilePageState extends State<ProfilePage> {
 // ============================================
 // Profile Content Widget
 // ============================================
-
 class _ProfileContent extends StatelessWidget {
   final User user;
   final bool isOwnProfile;
+  final bool isUpdating;
 
-  const _ProfileContent({required this.user, required this.isOwnProfile});
+  const _ProfileContent({
+    required this.user,
+    required this.isOwnProfile,
+    this.isUpdating = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: () async {
-        context.read<UserBloc>().add(LoadUserRequested(userId: user.id));
-      },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: Column(
-          children: [
-            _buildHeader(context),
-            const SizedBox(height: 8),
-            _buildInfoSection(context),
-            if (user.bio != null && user.bio!.isNotEmpty)
-              _buildBioSection(context),
-            _buildServicesSection(context),
-            if (!isOwnProfile) _buildActionsSection(context),
-            const SizedBox(height: 24),
-          ],
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: () async {
+            context.read<UserBloc>().add(RefreshUserRequested(userId: user.id));
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                _buildHeader(context),
+                const SizedBox(height: 8),
+                _buildInfoSection(context),
+                if (user.bio != null && user.bio!.isNotEmpty)
+                  _buildBioSection(context),
+                _buildServicesSection(context),
+                if (!isOwnProfile) _buildActionsSection(context),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
         ),
-      ),
+
+        // Show updating indicator
+        if (isUpdating)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(AppRadius.small),
+                boxShadow: AppShadows.soft,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'جاري التحديث...',
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -226,7 +290,7 @@ class _ProfileContent extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'عضو منذ ${_formatDate(user.createdAt)}',
+            'عضو منذ ${_formatDate(user.createdAt!)}',
             style: textTheme.bodySmall?.copyWith(
               color: AppColors.textSecondary,
             ),
@@ -270,7 +334,7 @@ class _ProfileContent extends StatelessWidget {
             _InfoRow(
               icon: Icons.location_on,
               label: 'المدينة',
-              value: user.city!.name,
+              value: user.city!.arabicName,
             ),
           ],
         ],
@@ -283,7 +347,7 @@ class _ProfileContent extends StatelessWidget {
     final textTheme = theme.textTheme;
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: theme.cardTheme.color,
@@ -340,7 +404,7 @@ class _ProfileContent extends StatelessWidget {
               ),
               if (isOwnProfile)
                 TextButton.icon(
-                  onPressed: () => context.push('/services/add'),
+                  onPressed: () => context.pushNamed(AppRouteName.addService),
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('إضافة'),
                   style: TextButton.styleFrom(
@@ -408,12 +472,9 @@ class _ProfileContent extends StatelessWidget {
   }
 
   void _showAvatarOptions(BuildContext context) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-
     showModalBottomSheet(
       context: context,
-      backgroundColor: theme.cardTheme.color,
+      backgroundColor: Theme.of(context).cardTheme.color,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -445,15 +506,10 @@ class _ProfileContent extends StatelessWidget {
                         color: AppColors.primary,
                       ),
                     ),
-                    title: Text(
-                      'التقاط صورة',
-                      style: textTheme.bodyLarge?.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
+                    title: const Text('التقاط صورة'),
                     onTap: () {
                       Navigator.pop(context);
-                      // TODO: Implement camera capture
+                      // TODO: Implement
                     },
                   ),
                   ListTile(
@@ -468,15 +524,10 @@ class _ProfileContent extends StatelessWidget {
                         color: AppColors.info,
                       ),
                     ),
-                    title: Text(
-                      'اختيار من المعرض',
-                      style: textTheme.bodyLarge?.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
+                    title: const Text('اختيار من المعرض'),
                     onTap: () {
                       Navigator.pop(context);
-                      // TODO: Implement gallery picker
+                      // TODO: Implement
                     },
                   ),
                   if (user.avatarUrl != null)
@@ -489,16 +540,14 @@ class _ProfileContent extends StatelessWidget {
                         ),
                         child: const Icon(Icons.delete, color: AppColors.error),
                       ),
-                      title: Text(
+                      title: const Text(
                         'حذف الصورة',
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: AppColors.error,
-                        ),
+                        style: TextStyle(color: AppColors.error),
                       ),
                       onTap: () {
                         Navigator.pop(context);
                         context.read<UserBloc>().add(
-                          DeleteAvatarRequested(userId: user.phone),
+                          DeleteAvatarRequested(userId: user.id),
                         );
                       },
                     ),
@@ -510,7 +559,7 @@ class _ProfileContent extends StatelessWidget {
   }
 
   void _contactUser(BuildContext context) {
-    context.push('/chat/${user.phone}');
+    context.push('/chat/${user.id}');
   }
 
   void _callUser(BuildContext context) {
@@ -542,7 +591,6 @@ class _ProfileContent extends StatelessWidget {
 // ============================================
 // Info Row Widget
 // ============================================
-
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -558,8 +606,7 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
+    final textTheme = Theme.of(context).textTheme;
 
     final child = Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),

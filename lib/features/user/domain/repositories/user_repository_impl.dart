@@ -39,20 +39,8 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
-  Future<User> updateUser({
-    required String userId,
-    String? fullName,
-    City? city,
-    String? avatarUrl,
-    String? bio,
-  }) async {
-    return await remoteDataSource.updateUser(
-      userId: userId,
-      fullName: fullName,
-      city: city,
-      avatarUrl: avatarUrl,
-      bio: bio,
-    );
+  Future<User> updateUser({required User user}) async {
+    return await remoteDataSource.updateUser(user: user);
   }
 
   @override
