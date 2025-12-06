@@ -1,88 +1,64 @@
-enum City {
-  damascus('دمشق', 'Damascus'),
-  aleppo('حلب', 'Aleppo'),
-  homs('حمص', 'Homs'),
-  latakia('اللاذقية', 'Latakia'),
-  hama('حماة', 'Hama'),
-  raqqa('الرقة', 'Raqqa'),
-  deirEzZor('دير الزور', 'Deir ez-Zor'),
-  alHasakah('الحسكة', 'Al-Hasakah'),
-  qamishli('القامشلي', 'Qamishli'),
-  daraa('درعا', 'Daraa'),
-  asSuwayda('السويداء', 'As-Suwayda'),
-  tartus('طرطوس', 'Tartus'),
-  idlib('إدلب', 'Idlib');
+// lib/features/database/domain/entities/location.dart - UPDATED
+import 'package:equatable/equatable.dart';
+import 'package:warshasy/features/database/domain/entites/region.dart';
+import 'city.dart';
 
-  final String arabicName;
-  final String englishName;
+class Location extends Equatable {
+  final int cityId;
+  final String cityName;
+  final int? regionId;
+  final String? regionName;
 
-  static const Map<City, List<String>> _regionsByCity = {
-    City.damascus: [
-      'المزة',
-      'المهاجرين',
-      'باب توما',
-      'القصاع',
-      'أبو رمانة',
-      'المالكي',
-      'كفرسوسة',
-      'دمر',
-      'برزة',
-      'جرمانا',
-    ],
-    City.aleppo: ['العزيزية', 'الفرقان', 'الحمدانية', 'الشهباء', 'السليمانية'],
-    City.homs: ['الوعر', 'الخالدية', 'الحميدية', 'الإنشاءات'],
-    City.latakia: ['الزراعة', 'الرمل الجنوبي', 'الطابيات'],
-    // Other cities currently have no predefined regions
-    City.hama: [],
-    City.raqqa: [],
-    City.deirEzZor: [],
-    City.alHasakah: [],
-    City.qamishli: [],
-    City.daraa: [],
-    City.asSuwayda: [],
-    City.tartus: [],
-    City.idlib: [],
-  };
+  const Location({
+    required this.cityId,
+    required this.cityName,
+    this.regionId,
+    this.regionName,
+  });
 
-  const City(this.arabicName, this.englishName);
+  @override
+  List<Object?> get props => [cityId, cityName, regionId, regionName];
 
-  String get displayName => arabicName;
-  List<String> get regions => _regionsByCity[this] ?? const [];
-
-  static City fromString(String? value) {
-    if (value == null) return City.damascus;
-    return City.values.firstWhere(
-      (city) => city.arabicName == value || city.englishName == value,
-      orElse: () => City.damascus,
+  Location copyWith({
+    int? cityId,
+    String? cityNameAr,
+    int? regionId,
+    String? regionName,
+  }) {
+    return Location(
+      cityId: cityId ?? this.cityId,
+      cityName: cityNameAr ?? this.cityName,
+      regionId: regionId ?? this.regionId,
+      regionName: regionName ?? this.regionName,
     );
   }
-}
 
-class Location {
-  City city;
-  String location;
-  Location({required this.city, required this.location});
-
-  static Location fromString(String? value) =>
-      Location.fromStrings(city: value);
-
-  static Location fromStrings({String? city, String? location}) {
-    final cityEnum = City.fromString(city);
-    final fallbackLocation =
-        location ??
-        (cityEnum.regions.isNotEmpty ? cityEnum.regions.first : cityEnum.arabicName);
-    return Location(city: cityEnum, location: fallbackLocation);
+  Map<String, dynamic> toJson() {
+    return {
+      'city_id': cityId,
+      'city_name': cityName,
+      'region_id': regionId,
+      'region_name': regionName,
+    };
   }
 
-  static Location get defaultLocation => Location(
-    city: City.damascus,
-    location: City.damascus.regions.isNotEmpty
-        ? City.damascus.regions.first
-        : City.damascus.arabicName,
-  );
+  factory Location.fromJson(Map<String, dynamic> json) {
+    return Location(
+      cityId: json['city_id'] as int,
+      cityName: json['city_name'] as String,
+      regionId: json['region_id'] as int?,
+      regionName: json['region_name'] as String?,
+    );
+  }
 
-  Map<String, dynamic> toJson() => {
-    'city': city.arabicName,
-    'location': location,
-  };
+  // Create from City and optional Region
+  factory Location.fromCityAndRegion({required City city, Region? region}) {
+    return Location(
+      cityId: city.id,
+      cityName: city.nameAr,
+      regionId: region?.id,
+      regionName: region?.name,
+    );
+  }
+  bool get needsResolution => cityId == 0;
 }

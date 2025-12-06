@@ -336,7 +336,7 @@ class _ProfileContent extends StatelessWidget {
               icon: Icons.location_on,
               label: 'الموقع',
               value:
-                  '${user.location!.city.arabicName} - ${user.location!.location}',
+                  '${user.location!.cityName} - ${user.location!.regionName}',
             ),
           ],
         ],

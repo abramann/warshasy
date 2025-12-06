@@ -14,6 +14,10 @@ import 'package:warshasy/core/storage/storage_service.dart';
 // Import all auth files
 import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/auth/data/datasources/auth_local_datasource.dart';
+import 'package:warshasy/features/database/data/datasources/database_remote_datasource.dart';
+import 'package:warshasy/features/database/data/repositories/database_service_repo_impl.dart';
+import 'package:warshasy/features/database/domain/presentation/bloc/database_bloc.dart';
+import 'package:warshasy/features/database/domain/repositories/data_base_repository.dart';
 import 'package:warshasy/features/user/data/datasources/user_remote_datasource.dart';
 import 'package:warshasy/features/user/domain/repositories/user_repository.dart';
 import 'package:warshasy/features/user/domain/repositories/user_repository_impl.dart';
@@ -56,6 +60,7 @@ Future<void> init() async {
 
   _initAuthintication();
   _initUser();
+  _initDatabase();
 }
 
 void _initAuthintication() {
@@ -95,6 +100,22 @@ void _initUser() {
 
   // OLD (creates new instance every time):
   // sl.registerFactory(() => UserBloc(userRepository: sl()));
+}
+
+// Add this method to your existing init() function
+void _initDatabase() {
+  // Data sources
+  sl.registerLazySingleton<DatabaseRemoteDataSource>(
+    () => DatabaseRemoteDataSourceImpl(supabaseClient: sl()),
+  );
+
+  // Repositories
+  sl.registerLazySingleton<DatabaseRepository>(
+    () => DatabaseRepositoryImpl(remoteDataSource: sl()),
+  );
+
+  // BLoC - LazyS ingleton because we need it to persist throughout the app
+  sl.registerLazySingleton(() => DatabaseBloc(databaseRepository: sl()));
 }
 
 // ============================================

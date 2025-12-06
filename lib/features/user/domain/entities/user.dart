@@ -12,7 +12,7 @@ class User extends Equatable {
   final String id;
   final String phone;
   final String fullName;
-  final Location? location;
+  final Location location;
   final String? avatarUrl;
   final String? bio;
   final bool isActive;
@@ -23,7 +23,7 @@ class User extends Equatable {
     required this.id,
     required this.phone,
     required this.fullName,
-    this.location,
+    required this.location,
     this.avatarUrl,
     this.bio,
     this.isActive = true,

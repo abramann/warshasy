@@ -4,6 +4,7 @@
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import 'package:warshasy/features/auth/auth.dart';
+import 'package:warshasy/features/database/domain/entites/location.dart';
 import '../../../../core/network/network.dart';
 import '../../../../core/utils/injection_container.dart';
 import '../models/user_model.dart';
@@ -74,8 +75,8 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
         'phone': phone,
         'full_name': fullName,
         if (location != null) ...{
-          'city': location.city.arabicName,
-          'location': location.location,
+          'city': location.cityName,
+          'region': location.regionName,
         },
         if (bio != null) 'bio': bio,
       };
@@ -102,8 +103,8 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       updateData['full_name'] = fullName;
       updateData['phone'] = phone;
       if (userLocation != null) {
-        updateData['city'] = userLocation.city.arabicName;
-        updateData['location'] = userLocation.location;
+        updateData['city'] = userLocation.cityId;
+        updateData['region'] = userLocation.regionId;
       }
       if (avatarUrl != null) updateData['avatar_url'] = avatarUrl;
       if (bio != null) updateData['bio'] = bio;
@@ -225,8 +226,10 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
           .eq('is_active', true);
 
       if (location != null) {
-        queryBuilder = queryBuilder.eq('city', location.city.arabicName);
-        queryBuilder = queryBuilder.eq('location', location.location);
+        queryBuilder = queryBuilder.eq('city', location.cityId);
+        final regionId = location.regionId;
+        if (regionId != null)
+          queryBuilder = queryBuilder.eq('region', regionId);
       }
 
       if (query != null && query.isNotEmpty) {

@@ -10,7 +10,7 @@ class UserModel extends User {
     required super.id,
     required super.phone,
     required super.fullName,
-    super.location,
+    required super.location,
     super.avatarUrl,
     super.bio,
     super.isActive,
@@ -19,17 +19,11 @@ class UserModel extends User {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    final cityValue = json['city'] as String?;
-    final locationValue = json['location'] as String?;
-
     return UserModel(
       id: json['id'] as String,
       phone: json['phone'] as String,
       fullName: json['full_name'] as String,
-      location:
-          (cityValue != null || locationValue != null)
-              ? Location.fromStrings(city: cityValue, location: locationValue)
-              : null,
+      location: Location.fromJson(json),
       avatarUrl: json['avatar_url'] as String?,
       bio: json['bio'] as String?,
       isActive: json['is_active'] as bool? ?? true,
@@ -46,8 +40,8 @@ class UserModel extends User {
       'id': id,
       'phone': phone,
       'full_name': fullName,
-      'city': location?.city.arabicName,
-      'location': location?.location,
+      'city': location.cityId,
+      'region': location.regionId,
       'avatar_url': avatarUrl,
       'bio': bio,
       'created_at': createdAt?.toIso8601String(),

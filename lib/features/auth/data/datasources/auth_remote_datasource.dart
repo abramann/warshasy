@@ -64,11 +64,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     if (result == null) return null;
 
-    final userRow = result['users'] as Map<String, dynamic>;
+    final userJson = result['users'] as Map<String, dynamic>;
     final userId = result['user_id'] as String;
-    final fullName = userRow['full_name'] as String?;
-    final city = userRow['city'] as String?;
-    final location = userRow['location'] as String?;
+    final fullName = userJson['full_name'] as String?;
     final expiresAt =
         result['expires_at'] != null
             ? DateTime.parse(result['expires_at'])
@@ -79,8 +77,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       deviceId: deviceId,
       sessionToken: sessionToken,
       expiresAt: expiresAt,
-      fullName: fullName,
-      location: Location.fromString(location),
     );
   }
 
@@ -167,8 +163,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       deviceId: deviceId,
       sessionToken: sessionToken,
       expiresAt: expiresAt,
-      fullName: fullName,
-      location: userLocation,
     );
   }
 

@@ -12,8 +12,10 @@ import 'package:warshasy/core/theme/app_gradients.dart';
 import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
+import 'package:warshasy/features/database/domain/entites/location.dart';
 import 'package:warshasy/features/home/presentation/widgets/common_widgets.dart';
 import 'package:warshasy/features/home/presentation/widgets/custom_scaffold.dart';
+import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -23,7 +25,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String _selectedCity = City.damascus.arabicName;
+  int _selectedCity = 0;
   AuthSession? _authSession;
 
   @override
@@ -35,8 +37,8 @@ class _HomePageState extends State<HomePage> {
 
         if (state is Authenticated) {
           _authSession = state.session;
-          _selectedCity =
-              _authSession?.location?.city.arabicName ?? _selectedCity;
+          //  _selectedCity =
+          // _authSession?.?.city.arabicName ?? _selectedCity;
         } else {
           _authSession = null;
           if (state is AuthFailureState) {

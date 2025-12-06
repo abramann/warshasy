@@ -10,6 +10,7 @@ import 'package:warshasy/core/storage/repository/local_storage_reposotory.dart';
 import 'package:warshasy/core/utils/injection_container.dart';
 import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
+import 'package:warshasy/features/database/domain/entites/location.dart';
 import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
 
@@ -45,7 +46,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       _currentUser = user;
       _nameController.text = user.fullName;
       _bioController.text = user.bio ?? '';
-      _selectedLocation = user.location ?? Location.defaultLocation;
+      _selectedLocation = user.location;
     });
   }
 
@@ -165,8 +166,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   const SizedBox(height: 16),
 
                   // City Dropdown
-                  DropdownButtonFormField<City>(
-                    value: _selectedLocation.city,
+                  DropdownButtonFormField<Location>(
+                    value: _selectedLocation,
                     decoration: const InputDecoration(
                       labelText: 'المدينة',
                       hintText: 'اختر مدينتك',
