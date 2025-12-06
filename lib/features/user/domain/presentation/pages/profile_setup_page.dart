@@ -4,9 +4,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:warshasy/core/presentation/widgets/base_page.dart';
 import 'package:warshasy/core/storage/repository/local_storage_reposotory.dart';
 import 'package:warshasy/core/utils/injection_container.dart';
+import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
@@ -22,9 +24,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
-  City? _selectedCity;
+  late Location _selectedLocation;
   User? _currentUser;
-
   @override
   void initState() {
     super.initState();
@@ -44,7 +45,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       _currentUser = user;
       _nameController.text = user.fullName;
       _bioController.text = user.bio ?? '';
-      _selectedCity = user.city;
+      _selectedLocation = user.location ?? Location.defaultLocation;
     });
   }
 
@@ -61,7 +62,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
         id: _currentUser!.id,
         phone: _currentUser!.phone,
         fullName: _nameController.text.trim(),
-        city: _selectedCity,
+        location: _selectedLocation,
         bio:
             _bioController.text.trim().isEmpty
                 ? null
@@ -109,16 +110,10 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
               _setUser(state.user);
             } else if (state is UserUpdated) {
               // Update successful
-              final storage = sl<LocalStorageRepository>();
-              storage.saveUser(state.user);
+              //final storage = sl<LocalStorageRepository>();
+              //storage.saveUser(state.user);
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('تم تحديث البيانات بنجاح'),
-                  backgroundColor: Colors.green,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              context.showSuccessSnackBar('تم تحديث البيانات بنجاح');
 
               // Navigate back after a short delay
               Future.delayed(const Duration(milliseconds: 500), () {
@@ -126,13 +121,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
               });
             } else if (state is UserError) {
               // Show error
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.failure.message),
-                  backgroundColor: Colors.red,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              context.showErrorSnackBar(state.failure.message);
             }
           },
           builder: (context, state) {
@@ -177,7 +166,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
                   // City Dropdown
                   DropdownButtonFormField<City>(
-                    value: _selectedCity,
+                    value: _selectedLocation.city,
                     decoration: const InputDecoration(
                       labelText: 'المدينة',
                       hintText: 'اختر مدينتك',
@@ -195,11 +184,38 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                         isUpdating
                             ? null
                             : (city) {
-                              setState(() => _selectedCity = city);
+                              if (city != null)
+                                setState(() => _selectedLocation.city = city);
                             },
                   ),
                   const SizedBox(height: 16),
-
+                  // Region Dropdown
+                  DropdownButtonFormField<String>(
+                    value: _selectedLocation?.location,
+                    decoration: const InputDecoration(
+                      labelText: 'المنطقة',
+                      hintText: 'اختر المنطقة',
+                      prefixIcon: Icon(Icons.location_city),
+                      border: OutlineInputBorder(),
+                    ),
+                    items:
+                        _selectedLocation.city.regions.map((region) {
+                          return DropdownMenuItem(
+                            value: region,
+                            child: Text(region),
+                          );
+                        }).toList(),
+                    onChanged:
+                        isUpdating
+                            ? null
+                            : (location) {
+                              if (location != null)
+                                setState(
+                                  () => _selectedLocation.location = location,
+                                );
+                            },
+                  ),
+                  const SizedBox(height: 16),
                   // Bio Field
                   TextFormField(
                     controller: _bioController,
@@ -348,17 +364,38 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   }
 
   Future<void> _pickImageFromCamera() async {
-    // TODO: Implement camera picker
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('سيتم تفعيل الكاميرا قريباً')));
+    _pickImage(ImageSource.camera);
   }
 
   Future<void> _pickImageFromGallery() async {
-    // TODO: Implement gallery picker with image_picker
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('سيتم تفعيل المعرض قريباً')));
+    _pickImage(ImageSource.gallery);
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    if (_currentUser == null) return;
+
+    try {
+      final picker = ImagePicker();
+      final pickedImage = await picker.pickImage(
+        source: source,
+        maxWidth: 1200,
+        maxHeight: 1200,
+        imageQuality: 85,
+      );
+
+      if (pickedImage != null && mounted) {
+        context.read<UserBloc>().add(
+          UploadAvatarRequested(
+            userId: _currentUser!.id,
+            filePath: pickedImage.path,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        context.showErrorSnackBar('Failed to open camera');
+      }
+    }
   }
 
   void _deleteAvatar() {

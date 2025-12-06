@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:warshasy/core/constants/constants.dart';
 import 'package:warshasy/core/localization/localization.dart';
 import 'package:warshasy/core/presentation/widgets/base_page.dart';
 import 'package:warshasy/core/route/app_routes.dart';
@@ -8,6 +9,7 @@ import 'package:warshasy/core/theme/app_borders.dart';
 import 'package:warshasy/core/theme/app_colors.dart';
 import 'package:warshasy/core/theme/app_shadows.dart';
 import 'package:warshasy/core/theme/app_gradients.dart';
+import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 import 'package:warshasy/features/home/presentation/widgets/common_widgets.dart';
@@ -21,59 +23,371 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String selectedCity = City.damascus.arabicName;
-  AuthSession? authSession;
+  String _selectedCity = City.damascus.arabicName;
+  AuthSession? _authSession;
 
   @override
   Widget build(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, state) {
+        if (state is AuthLoadingStartup || state is AuthInitial)
+          return _buildStartupUI(context);
+
+        if (state is Authenticated) {
+          _authSession = state.session;
+          _selectedCity =
+              _authSession?.location?.city.arabicName ?? _selectedCity;
+        } else {
+          _authSession = null;
+          if (state is AuthFailureState) {
+            context.showErrorSnackBar(state.message);
+            context.read<AuthBloc>().add(AuthStartup());
+            return _buildStartupUI(context);
+          }
+        }
+
+        final isLoading = state is AuthLoading;
+        return _buildHomeUI(context, isLoading);
+      },
+    );
+  }
+
+  // Add this to your _HomePageState class
+
+  Widget _buildStartupUI(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final l = AppLocalizations.of(context);
+
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.primary,
+              AppColors.primary.withOpacity(0.8),
+              AppColors.background,
+            ],
+            stops: const [0.0, 0.5, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Spacer to push content up a bit
+              const Spacer(flex: 2),
+
+              // App Logo with animation
+              Hero(
+                tag: 'app_logo',
+                child: Container(
+                  width: 180,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 30,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(24),
+                  child: Image.asset(AppAssets.appLogo, fit: BoxFit.contain),
+                ),
+              ),
+
+              const SizedBox(height: 40),
+
+              // App Name
+              Text(
+                l.appTitle,
+                style: textTheme.headlineLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 32,
+                  letterSpacing: 1.2,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Tagline or description
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Text(
+                  'منصتك الموثوقة للخدمات المنزلية والحرفية',
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+
+              const Spacer(flex: 2),
+
+              // Loading Indicator
+              Column(
+                children: [
+                  SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Colors.white.withOpacity(0.9),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    l.loading,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+
+              const Spacer(flex: 1),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Alternative: Minimal version (simpler, faster loading)
+  Widget _buildStartupUIMinimal(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.primary,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Logo
+            Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: AppShadows.soft,
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Image.asset(AppAssets.appLogo, fit: BoxFit.contain),
+            ),
+
+            const SizedBox(height: 30),
+
+            // Loading indicator
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Alternative: With animated logo (even fancier)
+  Widget _buildStartupUIAnimated(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final l = AppLocalizations.of(context);
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.primary, AppColors.primaryDark],
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(flex: 2),
+
+                // Animated Logo with pulse effect
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.8, end: 1.0),
+                  duration: const Duration(milliseconds: 1500),
+                  curve: Curves.easeInOut,
+                  builder: (context, scale, child) {
+                    return Transform.scale(scale: scale, child: child);
+                  },
+                  child: Hero(
+                    tag: 'app_logo',
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.3),
+                            blurRadius: 40,
+                            spreadRadius: 10,
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 30,
+                            offset: const Offset(0, 15),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(28),
+                      child: Image.asset(
+                        AppAssets.appLogo,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 50),
+
+                // App Name with fade-in effect
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 1000),
+                  builder: (context, opacity, child) {
+                    return Opacity(opacity: opacity, child: child);
+                  },
+                  child: Column(
+                    children: [
+                      Text(
+                        l.appTitle,
+                        style: textTheme.headlineLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 36,
+                          letterSpacing: 1.5,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black.withOpacity(0.3),
+                              offset: const Offset(0, 2),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          'منصتك الموثوقة للخدمات',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Spacer(flex: 2),
+
+                // Loading with text
+                Column(
+                  children: [
+                    SizedBox(
+                      width: 45,
+                      height: 45,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.white.withOpacity(0.95),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      'جاري التحميل...',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withOpacity(0.85),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const Spacer(flex: 1),
+
+                // Version or copyright (optional)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: Text(
+                    'الإصدار 1.0.0',
+                    style: textTheme.bodySmall?.copyWith(
+                      color: Colors.white.withOpacity(0.6),
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomeUI(BuildContext context, bool isLoading) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final isTablet = MediaQuery.of(context).size.width > 600;
     final l = AppLocalizations.of(context);
 
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        final isLoading = state is AuthLoading;
-
-        if (state is Authenticated) {
-          authSession = state.session;
-        } else {
-          authSession = null;
-        }
-
-        selectedCity = authSession?.city?.arabicName ?? selectedCity;
-
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: CustomerScaffold(
-            appBar: CommonWidgets.buildDefaultAppBar(context),
-            body: SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.all(isTablet ? 24.0 : 20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildWelcomeSection(
-                      context,
-                      isLoading,
-                      textTheme,
-                      isTablet,
-                    ),
-                    const SizedBox(height: 20),
-                    _buildSearchBar(context),
-                    const SizedBox(height: 20),
-                    _buildLocationSelector(context),
-                    const SizedBox(height: 24),
-                    _buildSectionHeader(textTheme),
-                    const SizedBox(height: 16),
-                    _buildCategoryGrid(context, isTablet),
-                  ],
-                ),
-              ),
-            ),
+    return CustomerScaffold(
+      appBar: CommonWidgets.buildDefaultAppBar(context),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: EdgeInsets.all(isTablet ? 24.0 : 20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildWelcomeSection(context, isLoading, textTheme, isTablet),
+              const SizedBox(height: 20),
+              _buildSearchBar(context),
+              const SizedBox(height: 20),
+              _buildLocationSelector(context),
+              const SizedBox(height: 24),
+              _buildSectionHeader(textTheme),
+              const SizedBox(height: 16),
+              _buildCategoryGrid(context, isTablet),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -97,7 +411,7 @@ class _HomePageState extends State<HomePage> {
                 const CircularProgressIndicator()
               else
                 Text(
-                  '${l.welcomeGreeting} ${authSession?.fullName ?? ''}',
+                  '${l.welcomeGreeting} ${_authSession?.fullName ?? ''}',
                   style: textTheme.titleLarge?.copyWith(
                     color: AppColors.textPrimary,
                   ),
@@ -113,7 +427,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         const SizedBox(width: 12),
-        if (authSession != null)
+        if (_authSession != null)
           ElevatedButton(
             onPressed: () => context.pushNamed(AppRouteName.addService),
             child: Text(l.homePostService),
@@ -172,7 +486,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  selectedCity,
+                  _selectedCity,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                     color: AppColors.textPrimary,
@@ -338,14 +652,14 @@ class _HomePageState extends State<HomePage> {
                           leading: const Icon(Icons.location_city),
                           title: Text(city.arabicName),
                           trailing:
-                              selectedCity == city.arabicName
+                              _selectedCity == city.arabicName
                                   ? const Icon(
                                     Icons.check,
                                     color: AppColors.accent,
                                   )
                                   : null,
                           onTap: () {
-                            setState(() => selectedCity = city.arabicName);
+                            setState(() => _selectedCity = city.arabicName);
                             Navigator.pop(context);
                           },
                         ),

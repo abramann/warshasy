@@ -1,8 +1,4 @@
 import 'package:warshasy/core/storage/repository/storage_keys.dart';
-import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
-
-import '../../../features/user/domain/entities/user.dart';
-import '../../../features/user/data/models/user_model.dart';
 import '../storage_service.dart';
 
 /// High-level repository for common storage operations
@@ -11,74 +7,6 @@ class LocalStorageRepository {
   final StorageService _storageService;
 
   LocalStorageRepository(this._storageService);
-
-  // ============================================
-  // USER OPERATIONS
-  // ============================================
-
-  /// Save user to local storage
-  Future<bool> saveUser(User user) async {
-    try {
-      final userModel = UserModel.fromEntity(user);
-      await _storageService.saveString(StorageKeys.userPhone, user.phone);
-      await _storageService.saveString(
-        StorageKeys.userFullName,
-        user.fullName ?? '',
-      );
-      if (user.city != null) {
-        await _storageService.saveString(
-          StorageKeys.userCity,
-          user.city!.arabicName,
-        );
-      }
-      if (user.avatarUrl != null) {
-        await _storageService.saveString(
-          StorageKeys.userAvatarUrl,
-          user.avatarUrl!,
-        );
-      }
-
-      // Save complete user object as JSON
-      final success = await _storageService.saveJson(
-        StorageKeys.userObject,
-        userModel.toJson(),
-      );
-
-      if (success) {
-        await _storageService.saveBool(StorageKeys.isAuthenticated, true);
-      }
-
-      return success;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /// Get user from local storage
-  User? getUser() {
-    try {
-      final userJson = _storageService.getJson(StorageKeys.userObject);
-      if (userJson == null) return null;
-      return UserModel.fromJson(userJson);
-    } catch (e) {
-      return null;
-    }
-  }
-
-  /// Get user ID
-  String? getUserId() {
-    return _storageService.getString(StorageKeys.userId);
-  }
-
-  /// Get user phone
-  String? getUserPhone() {
-    return _storageService.getString(StorageKeys.userPhone);
-  }
-
-  /// Check if user is authenticated
-  bool isAuthenticated() {
-    return _storageService.getBool(StorageKeys.isAuthenticated) ?? false;
-  }
 
   /// Clear user data (logout)
   Future<bool> clearUserData() async {

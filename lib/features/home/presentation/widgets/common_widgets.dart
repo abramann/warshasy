@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:warshasy/core/constants/constants.dart';
-import 'package:warshasy/core/theme/app_gradients.dart';
+import 'package:warshasy/core/localization/localization.dart';
 import 'package:warshasy/features/auth/auth.dart';
 
 class CommonWidgets {
   static PreferredSizeWidget buildDefaultAppBar(
     BuildContext context, {
-    String title = AppStrings.appName,
+    String? title,
   }) {
+    title = title ?? AppLocalizations.of(context).appTitle;
     // Will cause a rebuild when auth state changes
     final isAuthenticated = context.select<AuthBloc, bool>(
       (bloc) => bloc.state is Authenticated,

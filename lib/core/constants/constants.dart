@@ -2,6 +2,6 @@ library constants;
 
 export 'icons.dart';
 
-class AppStrings {
-  static const appName = 'تك فكس';
+class AppAssets {
+  static const appLogo = 'assets/icons/app-icon.png';
 }

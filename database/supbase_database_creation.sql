@@ -54,6 +54,7 @@ CREATE TABLE users (
   phone TEXT NOT NULL UNIQUE,
   full_name TEXT NOT NULL,
   city syrian_city,
+  location TEXT,
   avatar_url TEXT,
   bio TEXT,
   is_active BOOLEAN DEFAULT TRUE,
@@ -151,6 +152,7 @@ CREATE TABLE city_areas (
 -- Users indexes
 CREATE INDEX idx_users_phone ON users(phone);
 CREATE INDEX idx_users_city ON users(city);
+CREATE INDEX idx_users_location ON users(location);
 CREATE INDEX idx_users_active ON users(is_active) WHERE is_active = TRUE;
 CREATE INDEX idx_users_created_at ON users(created_at DESC);
 
@@ -273,6 +275,7 @@ SELECT
   u.phone,
   u.full_name,
   u.city,
+  u.location,
   u.avatar_url,
   u.bio,
   u.is_active AS user_active,
@@ -306,6 +309,7 @@ SELECT
   u.full_name,
   u.phone,
   u.city,
+  u.location,
   u.avatar_url,
   COUNT(us.id) AS total_services,
   json_agg(
@@ -323,7 +327,7 @@ LEFT JOIN user_services us ON u.id = us.user_id
 LEFT JOIN services s ON us.service_id = s.id
 
 WHERE u.is_active = TRUE
-GROUP BY u.id, u.full_name, u.phone, u.city, u.avatar_url;
+GROUP BY u.id, u.full_name, u.phone, u.city, u.location, u.avatar_url;
 
 -- =======================================================
 -- VIEW: city_service_stats

@@ -14,7 +14,7 @@ abstract class UserRemoteDataSource {
   Future<UserModel> createUser({
     required String phone,
     required String fullName,
-    City? city,
+    Location? location,
     String? bio,
   });
   Future<UserModel> updateUser({required User user});
@@ -26,7 +26,11 @@ abstract class UserRemoteDataSource {
   Future<void> deactivateUser(String userId);
   Future<void> reactivateUser(String userId);
   Future<bool> phoneExists(String phone);
-  Future<List<UserModel>> searchUsers({String? query, City? city, int? limit});
+  Future<List<UserModel>> searchUsers({
+    String? query,
+    Location? location,
+    int? limit,
+  });
 }
 
 class UserRemoteDataSourceImpl implements UserRemoteDataSource {
@@ -62,14 +66,17 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   Future<UserModel> createUser({
     required String phone,
     required String fullName,
-    City? city,
+    Location? location,
     String? bio,
   }) async {
     return await network.guard(() async {
       final userData = {
         'phone': phone,
         'full_name': fullName,
-        if (city != null) 'city': city.arabicName,
+        if (location != null) ...{
+          'city': location.city.arabicName,
+          'location': location.location,
+        },
         if (bio != null) 'bio': bio,
       };
 
@@ -88,13 +95,16 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       final userId = user.id;
       final fullName = user.fullName;
       final phone = user.phone;
-      final city = user.city;
+      final userLocation = user.location;
       final avatarUrl = user.avatarUrl;
       final bio = user.bio;
       final updatedAt = user.updatedAt?.toIso8601String();
       updateData['full_name'] = fullName;
       updateData['phone'] = phone;
-      if (city != null) updateData['city'] = city.arabicName;
+      if (userLocation != null) {
+        updateData['city'] = userLocation.city.arabicName;
+        updateData['location'] = userLocation.location;
+      }
       if (avatarUrl != null) updateData['avatar_url'] = avatarUrl;
       if (bio != null) updateData['bio'] = bio;
       if (updatedAt != null) updateData['updated_at'] = updatedAt;
@@ -205,7 +215,7 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   @override
   Future<List<UserModel>> searchUsers({
     String? query,
-    City? city,
+    Location? location,
     int? limit,
   }) async {
     return await network.guard(() async {
@@ -214,8 +224,9 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
           .select()
           .eq('is_active', true);
 
-      if (city != null) {
-        queryBuilder = queryBuilder.eq('city', city.arabicName);
+      if (location != null) {
+        queryBuilder = queryBuilder.eq('city', location.city.arabicName);
+        queryBuilder = queryBuilder.eq('location', location.location);
       }
 
       if (query != null && query.isNotEmpty) {

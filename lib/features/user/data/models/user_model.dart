@@ -2,7 +2,7 @@
 // lib/core/data/models/user_model.dart
 // ============================================
 
-import 'package:warshasy/features/user/domain/entities/city.dart';
+import 'package:warshasy/features/database/domain/entites/location.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
 
 class UserModel extends User {
@@ -10,7 +10,7 @@ class UserModel extends User {
     required super.id,
     required super.phone,
     required super.fullName,
-    super.city,
+    super.location,
     super.avatarUrl,
     super.bio,
     super.isActive,
@@ -19,12 +19,17 @@ class UserModel extends User {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final cityValue = json['city'] as String?;
+    final locationValue = json['location'] as String?;
+
     return UserModel(
       id: json['id'] as String,
       phone: json['phone'] as String,
       fullName: json['full_name'] as String,
-      city:
-          json['city'] != null ? City.fromString(json['city'] as String) : null,
+      location:
+          (cityValue != null || locationValue != null)
+              ? Location.fromStrings(city: cityValue, location: locationValue)
+              : null,
       avatarUrl: json['avatar_url'] as String?,
       bio: json['bio'] as String?,
       isActive: json['is_active'] as bool? ?? true,
@@ -41,7 +46,8 @@ class UserModel extends User {
       'id': id,
       'phone': phone,
       'full_name': fullName,
-      'city': city?.arabicName,
+      'city': location?.city.arabicName,
+      'location': location?.location,
       'avatar_url': avatarUrl,
       'bio': bio,
       'created_at': createdAt?.toIso8601String(),
@@ -54,7 +60,7 @@ class UserModel extends User {
       id: entity.id,
       phone: entity.phone,
       fullName: entity.fullName,
-      city: entity.city,
+      location: entity.location,
       avatarUrl: entity.avatarUrl,
       bio: entity.bio,
       isActive: entity.isActive,
@@ -67,7 +73,7 @@ class UserModel extends User {
     String? id,
     String? phone,
     String? fullName,
-    City? city,
+    Location? location,
     String? avatarUrl,
     String? bio,
     bool? isActive,
@@ -78,7 +84,7 @@ class UserModel extends User {
       id: id ?? this.id,
       phone: phone ?? this.phone,
       fullName: fullName ?? this.fullName,
-      city: city ?? this.city,
+      location: location ?? this.location,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       bio: bio ?? this.bio,
       isActive: isActive ?? this.isActive,

@@ -1,7 +1,7 @@
 // ============================================
 // lib/features/user/domain/repositories/user_repository.dart
 // ============================================
-import 'package:warshasy/features/user/domain/entities/city.dart';
+import 'package:warshasy/features/database/domain/entites/location.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
 
 abstract class UserRepository {
@@ -17,7 +17,7 @@ abstract class UserRepository {
   Future<User> createUser({
     required String phone,
     required String fullName,
-    City? city,
+    Location? location,
     String? bio,
   });
 
@@ -43,5 +43,9 @@ abstract class UserRepository {
   Future<bool> phoneExists(String phone);
 
   /// Search users by name or phone
-  Future<List<User>> searchUsers({String? query, City? city, int? limit});
+  Future<List<User>> searchUsers({
+    String? query,
+    Location? location,
+    int? limit,
+  });
 }

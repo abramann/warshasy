@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:warshasy/core/utils/phone_number.dart';
+import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
 
 class SignPage extends StatefulWidget {
@@ -52,22 +53,12 @@ class _SignPageState extends State<SignPage> {
       child: Scaffold(
         body: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
-            late final String message;
-            late final Color bkColor;
             if (state is Authenticated) {
-              message = 'تم التسجيل بنجاح';
-              bkColor = Colors.blue;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(message), backgroundColor: bkColor),
-              );
+              context.showSuccessSnackBar('تم التسجيل بنجاح');
             }
             if (state is AuthFailureState) {
               setState(() => _isButtonPressed = false);
-              message = state.message;
-              bkColor = Colors.red;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(message), backgroundColor: bkColor),
-              );
+              context.showErrorSnackBar(state.message);
             } else if (state is VerificationCodeSent) {
               setState(() {
                 _isButtonPressed = false;

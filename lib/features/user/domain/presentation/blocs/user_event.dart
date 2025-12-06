@@ -56,13 +56,13 @@ class DeleteAvatarRequested extends UserEvent {
 
 class SearchUsersRequested extends UserEvent {
   final String? query;
-  final City? city;
+  final Location? location;
   final int? limit;
 
-  SearchUsersRequested({this.query, this.city, this.limit});
+  SearchUsersRequested({this.query, this.location, this.limit});
 
   @override
-  List<Object?> get props => [query, city, limit];
+  List<Object?> get props => [query, location, limit];
 }
 
 class ClearUserRequested extends UserEvent {}

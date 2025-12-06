@@ -27,13 +27,13 @@ class UserRepositoryImpl implements UserRepository {
   Future<User> createUser({
     required String phone,
     required String fullName,
-    City? city,
+    Location? location,
     String? bio,
   }) async {
     return await remoteDataSource.createUser(
       phone: phone,
       fullName: fullName,
-      city: city,
+      location: location,
       bio: bio,
     );
   }
@@ -77,12 +77,12 @@ class UserRepositoryImpl implements UserRepository {
   @override
   Future<List<User>> searchUsers({
     String? query,
-    City? city,
+    Location? location,
     int? limit,
   }) async {
     return await remoteDataSource.searchUsers(
       query: query,
-      city: city,
+      location: location,
       limit: limit,
     );
   }

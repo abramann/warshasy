@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:warshasy/core/errors/errors.dart';
-import 'package:warshasy/features/user/domain/entities/city.dart';
+import 'package:warshasy/features/database/domain/entites/location.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
 import 'package:warshasy/features/user/domain/repositories/user_repository.dart';
 
@@ -167,7 +167,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     try {
       final users = await userRepository.searchUsers(
         query: event.query,
-        city: event.city,
+        location: event.location,
         limit: event.limit,
       );
 

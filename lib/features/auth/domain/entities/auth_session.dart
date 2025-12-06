@@ -1,5 +1,5 @@
 import 'package:warshasy/features/auth/auth.dart';
-import 'package:warshasy/features/user/data/models/user_model.dart';
+import 'package:warshasy/features/database/domain/entites/location.dart';
 
 class AuthSession {
   final String userId;
@@ -7,7 +7,7 @@ class AuthSession {
   final String sessionToken;
   final DateTime? expiresAt;
   final String? fullName;
-  final City? city;
+  final Location? location;
 
   AuthSession({
     required this.userId,
@@ -15,10 +15,28 @@ class AuthSession {
     required this.sessionToken,
     this.expiresAt,
     this.fullName,
-    this.city,
+    this.location,
   });
 
   factory AuthSession.fromJson(Map<String, dynamic> json) {
+    final rawLocation = json['location'];
+    Location? parsedLocation;
+    if (rawLocation is Map<String, dynamic>) {
+      parsedLocation = Location.fromStrings(
+        city: rawLocation['city'] as String?,
+        location: rawLocation['location'] as String?,
+      );
+    } else {
+      final cityValue = json['city'] as String?;
+      final locationValue = json['location'] as String?;
+      if (cityValue != null || locationValue != null) {
+        parsedLocation = Location.fromStrings(
+          city: cityValue,
+          location: locationValue,
+        );
+      }
+    }
+
     return AuthSession(
       userId: json['userId'] as String,
       deviceId: json['deviceId'] as String,
@@ -28,7 +46,7 @@ class AuthSession {
               ? DateTime.parse(json['expiresAt'] as String)
               : null,
       fullName: json['fullName'] as String?,
-      city: json['city'],
+      location: parsedLocation,
     );
   }
 
@@ -39,7 +57,8 @@ class AuthSession {
       'sessionToken': sessionToken,
       'expiresAt': expiresAt?.toIso8601String(),
       'fullName': fullName,
-      'city': city,
+      'city': location?.city.arabicName,
+      'location': location?.toJson(),
     };
   }
 
@@ -50,7 +69,7 @@ class AuthSession {
     String? sessionToken,
     DateTime? expiresAt,
     String? fullName,
-    City? city,
+    Location? location,
   }) {
     return AuthSession(
       userId: userId ?? this.userId,
@@ -58,7 +77,7 @@ class AuthSession {
       sessionToken: sessionToken ?? this.sessionToken,
       expiresAt: expiresAt ?? this.expiresAt,
       fullName: fullName ?? this.fullName,
-      city: city ?? this.city,
+      location: location ?? this.location,
     );
   }
 }

@@ -127,6 +127,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/icons/app-icon.png
     - assets/icons/crafts.png
     - assets/icons/technical.png
     - assets/icons/cleaning_and_home.png

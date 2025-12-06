@@ -6,5 +6,4 @@ export 'data/datasources/auth_remote_datasource.dart';
 export 'domain/repositories/auth_repository.dart';
 export 'presentation/bloc/auth_bloc.dart';
 export '../user/domain/entities/user.dart';
-export '../user/domain/entities/city.dart';
 export 'data/repositories/auth_repository_impl.dart';

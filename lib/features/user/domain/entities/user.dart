@@ -2,7 +2,7 @@
 // Think of it as a blueprint/contract
 
 import 'package:equatable/equatable.dart';
-import 'package:warshasy/features/user/domain/entities/city.dart';
+import 'package:warshasy/features/database/domain/entites/location.dart';
 
 // ============================================
 // DOMAIN LAYER
@@ -12,7 +12,7 @@ class User extends Equatable {
   final String id;
   final String phone;
   final String fullName;
-  final City? city;
+  final Location? location;
   final String? avatarUrl;
   final String? bio;
   final bool isActive;
@@ -23,7 +23,7 @@ class User extends Equatable {
     required this.id,
     required this.phone,
     required this.fullName,
-    this.city,
+    this.location,
     this.avatarUrl,
     this.bio,
     this.isActive = true,
@@ -36,7 +36,7 @@ class User extends Equatable {
     id,
     phone,
     fullName,
-    city,
+    location,
     avatarUrl,
     bio,
     isActive,

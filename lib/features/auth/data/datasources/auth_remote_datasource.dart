@@ -11,7 +11,7 @@ import 'package:warshasy/core/network/network.dart';
 import 'package:warshasy/core/env/call_me_bot.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 import 'package:warshasy/features/user/data/models/user_model.dart';
-import 'package:warshasy/features/user/domain/entities/city.dart';
+import 'package:warshasy/features/database/domain/entites/location.dart';
 import '../../../../core/errors/errors.dart';
 import 'package:warshasy/core/utils/injection_container.dart';
 import 'package:http/http.dart' as http;
@@ -68,6 +68,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final userId = result['user_id'] as String;
     final fullName = userRow['full_name'] as String?;
     final city = userRow['city'] as String?;
+    final location = userRow['location'] as String?;
     final expiresAt =
         result['expires_at'] != null
             ? DateTime.parse(result['expires_at'])
@@ -79,7 +80,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       sessionToken: sessionToken,
       expiresAt: expiresAt,
       fullName: fullName,
-      city: City.fromString(city),
+      location: Location.fromString(location),
     );
   }
 
@@ -145,7 +146,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     final userId = user!.id;
     final fullName = user.fullName;
-    final city = user.city;
+    final userLocation = user.location;
     // 4) Generate a session token
     final sessionToken = _generateSessionToken();
     final expiresAt = DateTime.now().add(const Duration(days: 30));
@@ -167,7 +168,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       sessionToken: sessionToken,
       expiresAt: expiresAt,
       fullName: fullName,
-      city: city,
+      location: userLocation,
     );
   }
 

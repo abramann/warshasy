@@ -10,6 +10,7 @@ import 'package:warshasy/core/theme/app_borders.dart';
 import 'package:warshasy/core/theme/app_colors.dart';
 import 'package:warshasy/core/theme/app_shadows.dart';
 import 'package:warshasy/core/utils/injection_container.dart';
+import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/home/presentation/widgets/custom_scaffold.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
@@ -329,12 +330,13 @@ class _ProfileContent extends StatelessWidget {
             value: user.phone,
             onTap: isOwnProfile ? null : () => _callUser(context),
           ),
-          if (user.city != null) ...[
+          if (user.location != null) ...[
             const SizedBox(height: 12),
             _InfoRow(
               icon: Icons.location_on,
-              label: 'المدينة',
-              value: user.city!.arabicName,
+              label: 'الموقع',
+              value:
+                  '${user.location!.city.arabicName} - ${user.location!.location}',
             ),
           ],
         ],
@@ -357,12 +359,16 @@ class _ProfileContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'نبذة',
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
+          Row(
+            children: [
+              Text(
+                'نبذة',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Text(
@@ -563,15 +569,7 @@ class _ProfileContent extends StatelessWidget {
   }
 
   void _callUser(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('الاتصال بـ ${user.phone}'),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.medium),
-        ),
-      ),
-    );
+    context.showInfoSnackBar('الاتصال بـ ${user.phone}');
   }
 
   String _formatDate(DateTime date) {

@@ -16,7 +16,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onStartup(AuthStartup event, Emitter<AuthState> emit) async {
-    emit(AuthLoading());
+    emit(AuthLoadingStartup());
 
     try {
       final session = await authRepository.restoreSession();

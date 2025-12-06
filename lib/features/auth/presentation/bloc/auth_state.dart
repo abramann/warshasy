@@ -6,6 +6,8 @@ class AuthInitial extends AuthState {}
 
 class AuthLoading extends AuthState {}
 
+class AuthLoadingStartup extends AuthLoading {}
+
 class Authenticated extends AuthState {
   final AuthSession session;
   Authenticated(this.session);

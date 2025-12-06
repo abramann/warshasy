@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:warshasy/core/errors/errors.dart';
 import 'package:warshasy/core/presentation/pages/loading_page.dart';
+import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
 
 class VerifyCodePage extends StatefulWidget {
@@ -107,7 +108,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
         SignInRequested(phone: widget.phoneNumber, code: code),
       );
     } else {
-      _showError('الرجاء إدخال رمز التحقق كاملاً');
+      context.showErrorSnackBar('الرجاء إدخال رمز التحقق كاملاً');
     }
   }
 
@@ -117,32 +118,8 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
         SendVerificationCodeRequested(phone: widget.phoneNumber),
       );
       _startResendTimer();
-      _showSuccess('تم إعادة إرسال الرمز');
+      context.showSuccessSnackBar('تم إعادة إرسال الرمز');
     }
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red.shade700,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-  }
-
-  void _showSuccess(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green.shade700,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
   }
 
   void _clearOtp() {
@@ -168,7 +145,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
           listener: (context, state) {
             if (state is AuthFailureState) {
               _clearOtp();
-              _showError('${state.message}');
+              context.showErrorSnackBar(state.message);
             } else if (state is Authenticated) {
               _resendTimer?.cancel(); // stop timer
               context.go('/home');
@@ -176,7 +153,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
               // context.go('/home');
             } else if (state is VerificationCodeSent) {
               _clearOtp();
-              _showSuccess('تم إرسال الرمز بنجاح');
+              context.showSuccessSnackBar('تم إرسال الرمز بنجاح');
             }
           },
           builder: (context, state) {
