@@ -1,5 +1,5 @@
 import 'package:warshasy/features/auth/auth.dart';
-import 'package:warshasy/features/database/domain/entites/location.dart';
+import 'package:warshasy/features/static_data/domain/entites/location.dart';
 
 class AuthSession {
   final String userId;

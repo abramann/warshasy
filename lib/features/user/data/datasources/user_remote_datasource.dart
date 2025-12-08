@@ -4,7 +4,7 @@
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import 'package:warshasy/features/auth/auth.dart';
-import 'package:warshasy/features/database/domain/entites/location.dart';
+import 'package:warshasy/features/static_data/domain/entites/location.dart';
 import '../../../../core/network/network.dart';
 import '../../../../core/utils/injection_container.dart';
 import '../models/user_model.dart';

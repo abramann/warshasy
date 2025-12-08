@@ -10,8 +10,9 @@ import 'package:warshasy/core/storage/repository/local_storage_reposotory.dart';
 import 'package:warshasy/core/utils/injection_container.dart';
 import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
-import 'package:warshasy/features/database/domain/entites/location.dart';
-import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart';
+import 'package:warshasy/features/static_data/domain/entites/location.dart';
+import 'package:warshasy/features/user/domain/presentation/blocs/current_user_bloc/current_user_bloc.dart';
+import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc/user_bloc.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
 
 class ProfileSetupPage extends StatefulWidget {
@@ -35,9 +36,28 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   }
 
   void _loadCurrentUser() {
-    final userState = context.read<UserBloc>().state;
-    if (userState is UserLoaded) {
+    // Use CurrentUserBloc instead of UserBloc
+    final userState = context.read<CurrentUserBloc>().state;
+    if (userState is CurrentUserLoaded) {
       _setUser(userState.user);
+    }
+  }
+
+  void _saveProfile() {
+    if (_formKey.currentState!.validate() && _currentUser != null) {
+      final updatedUser = User(
+        id: _currentUser!.id,
+        phone: _currentUser!.phone,
+        fullName: _nameController.text.trim(),
+        location: _selectedLocation,
+        bio:
+            _bioController.text.trim().isEmpty
+                ? null
+                : _bioController.text.trim(),
+        updatedAt: DateTime.now(),
+      );
+      // Use CurrentUserBloc instead of UserBloc
+      context.read<CurrentUserBloc>().add(UpdateCurrentUser(user: updatedUser));
     }
   }
 
@@ -57,23 +77,6 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     super.dispose();
   }
 
-  void _saveProfile() {
-    if (_formKey.currentState!.validate() && _currentUser != null) {
-      final updatedUser = User(
-        id: _currentUser!.id,
-        phone: _currentUser!.phone,
-        fullName: _nameController.text.trim(),
-        location: _selectedLocation,
-        bio:
-            _bioController.text.trim().isEmpty
-                ? null
-                : _bioController.text.trim(),
-        updatedAt: DateTime.now(),
-      );
-      context.read<UserBloc>().add(UpdateProfileRequested(user: updatedUser));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return BasePage(
@@ -81,9 +84,10 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
         appBar: AppBar(
           title: const Text('تعديل الملف الشخصي'),
           actions: [
-            BlocBuilder<UserBloc, UserState>(
+            // Use CurrentUserBloc instead of UserBloc
+            BlocBuilder<CurrentUserBloc, CurrentUserState>(
               builder: (context, state) {
-                final isUpdating = state is UserUpdating;
+                final isUpdating = state is CurrentUserUpdating;
                 return TextButton(
                   onPressed: isUpdating ? null : _saveProfile,
                   child:
@@ -104,41 +108,32 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             ),
           ],
         ),
-        body: BlocConsumer<UserBloc, UserState>(
+        // Use CurrentUserBloc instead of UserBloc
+        body: BlocConsumer<CurrentUserBloc, CurrentUserState>(
           listener: (context, state) {
-            if (state is UserLoaded && _currentUser == null) {
-              // Initial load
+            if (state is CurrentUserLoaded && _currentUser == null) {
               _setUser(state.user);
-            } else if (state is UserUpdated) {
-              // Update successful
-              //final storage = sl<LocalStorageRepository>();
-              //storage.saveUser(state.user);
-
+            } else if (state is CurrentUserUpdated) {
               context.showSuccessSnackBar('تم تحديث البيانات بنجاح');
-
-              // Navigate back after a short delay
               Future.delayed(const Duration(milliseconds: 500), () {
                 if (mounted) context.pop();
               });
-            } else if (state is UserError) {
-              // Show error
+            } else if (state is CurrentUserError) {
               context.showErrorSnackBar(state.failure.message);
             }
           },
           builder: (context, state) {
-            // Show loading only on initial load
-            if (_currentUser == null && state is UserLoading) {
+            if (_currentUser == null && state is CurrentUserLoading) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            final isUpdating = state is UserUpdating;
+            final isUpdating = state is CurrentUserUpdating;
 
             return Form(
               key: _formKey,
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  // Avatar Section
                   _buildAvatarSection(context, isUpdating),
                   const SizedBox(height: 32),
 
@@ -166,7 +161,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   const SizedBox(height: 16),
 
                   // City Dropdown
-                  DropdownButtonFormField<Location>(
+                  /* DropdownButtonFormField<Location>(
                     value: _selectedLocation,
                     decoration: const InputDecoration(
                       labelText: 'المدينة',
@@ -192,7 +187,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   const SizedBox(height: 16),
                   // Region Dropdown
                   DropdownButtonFormField<String>(
-                    value: _selectedLocation?.location,
+                    value: _selectedLocation?.regionName,
                     decoration: const InputDecoration(
                       labelText: 'المنطقة',
                       hintText: 'اختر المنطقة',
@@ -200,7 +195,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                       border: OutlineInputBorder(),
                     ),
                     items:
-                        _selectedLocation.city.regions.map((region) {
+                    
+                        _selectedLocation.cityId.regions.map((region) {
                           return DropdownMenuItem(
                             value: region,
                             child: Text(region),
@@ -215,7 +211,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                                   () => _selectedLocation.location = location,
                                 );
                             },
-                  ),
+                  ),*/
                   const SizedBox(height: 16),
                   // Bio Field
                   TextFormField(

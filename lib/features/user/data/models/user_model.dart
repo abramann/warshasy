@@ -2,7 +2,7 @@
 // lib/core/data/models/user_model.dart
 // ============================================
 
-import 'package:warshasy/features/database/domain/entites/location.dart';
+import 'package:warshasy/features/static_data/domain/entites/location.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
 
 class UserModel extends User {

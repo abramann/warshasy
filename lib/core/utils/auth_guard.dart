@@ -1,19 +1,17 @@
 // lib/core/utils/auth_guard.dart
 import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:warshasy/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:warshasy/core/route/app_routes.dart';
 
 class AuthGuard {
-  final AuthBloc authBloc;
-
-  AuthGuard(this.authBloc);
-
   Future<String?> handleAuthState(
     BuildContext? context,
     GoRouterState state,
   ) async {
-    final authState = authBloc.state;
+    if (context == null) return null;
+    final authState = context.read<AuthBloc>().state;
     final location = state.fullPath ?? state.uri.toString();
 
     final isLoggedIn = authState is Authenticated;

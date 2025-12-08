@@ -1,6 +1,6 @@
 // lib/features/database/domain/entities/city.dart
 import 'package:equatable/equatable.dart';
-import 'package:warshasy/features/database/domain/entites/region.dart';
+import 'package:warshasy/features/static_data/domain/entites/region.dart';
 
 class City extends Equatable {
   final int id;

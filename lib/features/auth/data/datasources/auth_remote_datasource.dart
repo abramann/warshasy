@@ -11,7 +11,7 @@ import 'package:warshasy/core/network/network.dart';
 import 'package:warshasy/core/env/call_me_bot.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
 import 'package:warshasy/features/user/data/models/user_model.dart';
-import 'package:warshasy/features/database/domain/entites/location.dart';
+import 'package:warshasy/features/static_data/domain/entites/location.dart';
 import '../../../../core/errors/errors.dart';
 import 'package:warshasy/core/utils/injection_container.dart';
 import 'package:http/http.dart' as http;

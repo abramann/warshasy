@@ -1,6 +1,6 @@
 // lib/features/database/domain/entities/location.dart - UPDATED
 import 'package:equatable/equatable.dart';
-import 'package:warshasy/features/database/domain/entites/region.dart';
+import 'package:warshasy/features/static_data/domain/entites/region.dart';
 import 'city.dart';
 
 class Location extends Equatable {

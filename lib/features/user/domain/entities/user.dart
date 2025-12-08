@@ -2,7 +2,7 @@
 // Think of it as a blueprint/contract
 
 import 'package:equatable/equatable.dart';
-import 'package:warshasy/features/database/domain/entites/location.dart';
+import 'package:warshasy/features/static_data/domain/entites/location.dart';
 
 // ============================================
 // DOMAIN LAYER

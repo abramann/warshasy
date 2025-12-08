@@ -20,13 +20,12 @@ extension GoRouterContextX on BuildContext {
 }
 
 class AppRouter {
-  final AuthBloc authBloc;
-  late final AuthGuard _authGuard = AuthGuard(authBloc);
+  static final AuthGuard _authGuard = AuthGuard();
 
-  AppRouter(this.authBloc);
+  AppRouter._();
   static String getCurrentRoute(BuildContext ctx) =>
       GoRouterState.of(ctx).uri.toString();
-  late final GoRouter router = GoRouter(
+  static final GoRouter router = GoRouter(
     initialLocation: AppRoutePath.home,
     //refreshListenable: GoRouterRefreshStream(authBloc.stream),
     redirect: (context, state) => _authGuard.handleAuthState(context, state),
@@ -38,14 +37,7 @@ class AppRouter {
       GoRoute(
         path: AppRoutePath.home,
         name: AppRouteName.home,
-        builder:
-            (context, state) => MultiBlocProvider(
-              providers: [
-                BlocProvider.value(value: authBloc),
-                // other blocs for home (e.g. UserBloc) if needed
-              ],
-              child: const HomePage(),
-            ),
+        builder: (context, state) => const HomePage(),
       ),
 
       // AUTH (PUBLIC)
@@ -53,23 +45,15 @@ class AppRouter {
         path: AppRoutePath.login,
         name: AppRouteName.login,
         pageBuilder:
-            (context, state) => MaterialPage(
-              key: state.pageKey,
-              child: BlocProvider.value(
-                value: authBloc,
-                child: const SignPage(),
-              ),
-            ),
+            (context, state) =>
+                MaterialPage(key: state.pageKey, child: const SignPage()),
         routes: [
           GoRoute(
             path: 'verify-code',
             name: AppRouteName.verifyCode,
             builder: (context, state) {
               final phone = state.extra as String;
-              return BlocProvider.value(
-                value: authBloc,
-                child: VerifyCodePage(phoneNumber: phone),
-              );
+              return VerifyCodePage(phoneNumber: phone);
             },
           ),
         ],

@@ -14,14 +14,15 @@ import 'package:warshasy/core/storage/storage_service.dart';
 // Import all auth files
 import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/auth/data/datasources/auth_local_datasource.dart';
-import 'package:warshasy/features/database/data/datasources/database_remote_datasource.dart';
-import 'package:warshasy/features/database/data/repositories/database_service_repo_impl.dart';
-import 'package:warshasy/features/database/domain/presentation/bloc/database_bloc.dart';
-import 'package:warshasy/features/database/domain/repositories/data_base_repository.dart';
+import 'package:warshasy/features/static_data/data/datasources/database_remote_datasource.dart';
+import 'package:warshasy/features/static_data/data/repositories/database_service_repo_impl.dart';
+import 'package:warshasy/features/static_data/domain/presentation/bloc/static_data_bloc.dart';
+import 'package:warshasy/features/static_data/domain/repositories/static_data_repository.dart';
 import 'package:warshasy/features/user/data/datasources/user_remote_datasource.dart';
+import 'package:warshasy/features/user/domain/presentation/blocs/current_user_bloc/current_user_bloc.dart';
 import 'package:warshasy/features/user/domain/repositories/user_repository.dart';
 import 'package:warshasy/features/user/domain/repositories/user_repository_impl.dart';
-import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart';
+import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc/user_bloc.dart';
 
 // ============================================
 // DEPENDENCY INJECTION - PRODUCTS MODULE
@@ -82,7 +83,6 @@ void _initAuthintication() {
   sl.registerFactory(() => AuthBloc(authRepository: sl()));
 }
 
-/// Initialize User feature dependencies
 void _initUser() {
   // Data sources
   sl.registerLazySingleton<UserRemoteDataSource>(
@@ -94,12 +94,15 @@ void _initUser() {
     () => UserRepositoryImpl(remoteDataSource: sl()),
   );
 
-  // BLoC - CHANGE FROM registerFactory to registerLazySingleton
-  // This ensures we have ONE instance that persists
-  sl.registerLazySingleton(() => UserBloc(userRepository: sl()));
+  // BLoCs - Both as LazyS ingleton
 
-  // OLD (creates new instance every time):
-  // sl.registerFactory(() => UserBloc(userRepository: sl()));
+  // Current user bloc - manages "me"
+  sl.registerLazySingleton(() => CurrentUserBloc(userRepository: sl()));
+
+  // User bloc - manages "other users"
+  // Change this to registerFactory since we might create multiple instances
+  // for viewing different users
+  sl.registerFactory(() => UserBloc(userRepository: sl()));
 }
 
 // Add this method to your existing init() function
@@ -110,12 +113,12 @@ void _initDatabase() {
   );
 
   // Repositories
-  sl.registerLazySingleton<DatabaseRepository>(
+  sl.registerLazySingleton<StaticDataRepository>(
     () => DatabaseRepositoryImpl(remoteDataSource: sl()),
   );
 
   // BLoC - LazyS ingleton because we need it to persist throughout the app
-  sl.registerLazySingleton(() => DatabaseBloc(databaseRepository: sl()));
+  sl.registerLazySingleton(() => StaticDataBloc(staticDataRepository: sl()));
 }
 
 // ============================================

@@ -1,25 +1,28 @@
-part of 'database_bloc.dart';
+part of 'static_data_bloc.dart';
 
-abstract class DatabaseState extends Equatable {
-  const DatabaseState();
+abstract class StaticDataState extends Equatable {
+  const StaticDataState();
 
   @override
   List<Object?> get props => [];
 }
 
-class DatabaseInitial extends DatabaseState {
-  const DatabaseInitial();
+class StaticDataInitial extends StaticDataState {
+  const StaticDataInitial();
 }
 
-class DatabaseLoading extends DatabaseState {
-  const DatabaseLoading();
+class StaticDataLoading extends StaticDataState {
+  const StaticDataLoading();
 }
 
-class DatabaseLoaded extends DatabaseState {
+class StaticDataLoaded extends StaticDataState {
   final List<City> cities;
   final List<ServiceCategory> serviceCategories;
 
-  const DatabaseLoaded({required this.cities, required this.serviceCategories});
+  const StaticDataLoaded({
+    required this.cities,
+    required this.serviceCategories,
+  });
 
   @override
   List<Object?> get props => [cities, serviceCategories];
@@ -81,10 +84,10 @@ class DatabaseLoaded extends DatabaseState {
   }
 }
 
-class DatabaseError extends DatabaseState {
+class StaticDataError extends StaticDataState {
   final Failure failure;
 
-  const DatabaseError({required this.failure});
+  const StaticDataError({required this.failure});
 
   @override
   List<Object?> get props => [failure];

@@ -1,6 +1,6 @@
 // lib/features/database/domain/entities/service_category.dart
 import 'package:equatable/equatable.dart';
-import 'package:warshasy/features/database/domain/entites/service.dart';
+import 'package:warshasy/features/static_data/domain/entites/service.dart';
 
 class ServiceCategory extends Equatable {
   final int id;

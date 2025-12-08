@@ -62,10 +62,6 @@ class AvatarUploaded extends UserState {
   List<Object> get props => [avatarUrl, user];
 }
 
-class AvatarDeleted extends UserState {
-  const AvatarDeleted();
-}
-
 class UserError extends UserState {
   final Failure failure;
 

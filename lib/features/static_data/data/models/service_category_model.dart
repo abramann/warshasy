@@ -1,6 +1,6 @@
 // lib/features/database/data/models/service_category_model.dart
-import 'package:warshasy/features/database/domain/entites/service.dart';
-import 'package:warshasy/features/database/domain/entites/service_category.dart';
+import 'package:warshasy/features/static_data/domain/entites/service.dart';
+import 'package:warshasy/features/static_data/domain/entites/service_category.dart';
 
 class ServiceCategoryModel extends ServiceCategory {
   const ServiceCategoryModel({

@@ -1,7 +1,7 @@
 // ============================================
 // lib/features/user/domain/repositories/user_repository.dart
 // ============================================
-import 'package:warshasy/features/database/domain/entites/location.dart';
+import 'package:warshasy/features/static_data/domain/entites/location.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
 
 abstract class UserRepository {

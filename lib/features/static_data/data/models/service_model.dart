@@ -1,5 +1,5 @@
 // lib/features/database/data/models/service_model.dart
-import 'package:warshasy/features/database/domain/entites/service.dart';
+import 'package:warshasy/features/static_data/domain/entites/service.dart';
 
 class ServiceModel extends Service {
   const ServiceModel({

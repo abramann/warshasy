@@ -1,6 +1,4 @@
-// ============================================
-// UPDATED profile_page.dart
-// ============================================
+// lib/features/user/domain/presentation/pages/profile_page.dart - UPDATED
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -13,8 +11,8 @@ import 'package:warshasy/core/utils/injection_container.dart';
 import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/home/presentation/widgets/custom_scaffold.dart';
-import 'package:warshasy/features/user/domain/entities/user.dart';
-import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc.dart';
+import 'package:warshasy/features/user/domain/presentation/blocs/current_user_bloc/current_user_bloc.dart';
+import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc/user_bloc.dart';
 
 class ProfilePage extends StatefulWidget {
   final String? userId;
@@ -26,19 +24,28 @@ class ProfilePage extends StatefulWidget {
 }
 
 class ProfilePageState extends State<ProfilePage> {
-  late final _isOwnProfile;
+  late final bool _isOwnProfile;
+  late final String _targetUserId;
 
   @override
   void initState() {
     super.initState();
 
-    // Load user if viewing another profile
-    // For own profile, user is already loaded in warshasy.dart
     final currentUserId = _getCurrentUserId(context);
-    final targetUserId = widget.userId ?? currentUserId;
-    sl<UserBloc>().add(LoadUserRequested(userId: targetUserId!));
+    _targetUserId = widget.userId ?? currentUserId!;
+    _isOwnProfile = _targetUserId == currentUserId;
 
-    _isOwnProfile = targetUserId == currentUserId;
+    // Load user based on whether it's own profile or not
+    if (_isOwnProfile) {
+      // Current user is already loaded in warshasy.dart, but we can force refresh
+      final currentUserBloc = context.read<CurrentUserBloc>();
+      if (currentUserBloc.currentUser == null) {
+        currentUserBloc.add(LoadCurrentUser(userId: _targetUserId));
+      }
+    } else {
+      // Load other user's profile using UserBloc
+      sl<UserBloc>().add(LoadUserRequested(userId: _targetUserId));
+    }
   }
 
   String? _getCurrentUserId(BuildContext context) {
@@ -54,39 +61,64 @@ class ProfilePageState extends State<ProfilePage> {
     return BasePage(
       child: CustomerScaffold(
         appBar: _buildAppBar(context, _isOwnProfile),
-        body: BlocBuilder<UserBloc, UserState>(
-          builder: (context, state) {
-            // Handle different states
-            if (state is UserLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+        body:
+            _isOwnProfile
+                ? _buildCurrentUserProfile()
+                : _buildOtherUserProfile(),
+      ),
+    );
+  }
 
-            if (state is UserLoaded) {
-              //if (state.user.id == targetUserId) {
-              return _ProfileContent(
-                user: state.user,
-                isOwnProfile: _isOwnProfile,
-              );
-              //}
-            }
+  // Build own profile using CurrentUserBloc
+  Widget _buildCurrentUserProfile() {
+    return BlocBuilder<CurrentUserBloc, CurrentUserState>(
+      builder: (context, state) {
+        if (state is CurrentUserLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-            if (state is UserUpdating) {
-              // Show updating indicator while keeping UI responsive
-              return _ProfileContent(
-                user: state.user,
-                isOwnProfile: _isOwnProfile,
-                isUpdating: true,
-              );
-            }
+        if (state is CurrentUserLoaded) {
+          return _ProfileContent(user: state.user, isOwnProfile: true);
+        }
 
-            if (state is UserError) {
-              return _buildErrorState(context, state, state.failure.message);
-            }
+        if (state is CurrentUserUpdating) {
+          return _ProfileContent(
+            user: state.user,
+            isOwnProfile: true,
+            isUpdating: true,
+          );
+        }
 
-            // If no user loaded yet, show loading
+        if (state is CurrentUserError) {
+          return _buildErrorState(context, state.failure.message);
+        }
+
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+  }
+
+  // Build other user's profile using UserBloc
+  Widget _buildOtherUserProfile() {
+    return BlocProvider(
+      create:
+          (_) => sl<UserBloc>()..add(LoadUserRequested(userId: _targetUserId)),
+      child: BlocBuilder<UserBloc, UserState>(
+        builder: (context, state) {
+          if (state is UserLoading) {
             return const Center(child: CircularProgressIndicator());
-          },
-        ),
+          }
+
+          if (state is UserLoaded) {
+            return _ProfileContent(user: state.user, isOwnProfile: false);
+          }
+
+          if (state is UserError) {
+            return _buildErrorState(context, state.failure.message);
+          }
+
+          return const Center(child: CircularProgressIndicator());
+        },
       ),
     );
   }
@@ -112,11 +144,7 @@ class ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildErrorState(
-    BuildContext context,
-    UserError state,
-    String targetUserId,
-  ) {
+  Widget _buildErrorState(BuildContext context, String message) {
     final textTheme = Theme.of(context).textTheme;
 
     return Center(
@@ -128,7 +156,7 @@ class ProfilePageState extends State<ProfilePage> {
             Icon(Icons.error_outline, size: 60, color: AppColors.error),
             const SizedBox(height: 16),
             Text(
-              state.failure.message,
+              message,
               style: textTheme.bodyLarge?.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -137,9 +165,18 @@ class ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () {
-                context.read<UserBloc>().add(
-                  LoadUserRequested(userId: targetUserId, forceRefresh: true),
-                );
+                if (_isOwnProfile) {
+                  context.read<CurrentUserBloc>().add(
+                    LoadCurrentUser(userId: _targetUserId, forceRefresh: true),
+                  );
+                } else {
+                  context.read<UserBloc>().add(
+                    LoadUserRequested(
+                      userId: _targetUserId,
+                      forceRefresh: true,
+                    ),
+                  );
+                }
               },
               icon: const Icon(Icons.refresh),
               label: const Text('إعادة المحاولة'),

@@ -1,5 +1,5 @@
 // lib/features/database/data/models/region_model.dart
-import 'package:warshasy/features/database/domain/entites/region.dart';
+import 'package:warshasy/features/static_data/domain/entites/region.dart';
 
 class RegionModel extends Region {
   const RegionModel({

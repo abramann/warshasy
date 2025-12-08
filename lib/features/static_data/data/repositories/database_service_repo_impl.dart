@@ -1,13 +1,13 @@
 // lib/features/database/data/repositories/database_repository_impl.dart
-import 'package:warshasy/features/database/data/datasources/database_remote_datasource.dart';
-import 'package:warshasy/features/database/data/models/city_model.dart';
-import 'package:warshasy/features/database/data/models/service_category_model.dart';
-import 'package:warshasy/features/database/domain/entites/city.dart';
-import 'package:warshasy/features/database/domain/entites/region.dart';
-import 'package:warshasy/features/database/domain/entites/service.dart';
-import 'package:warshasy/features/database/domain/repositories/data_base_repository.dart';
+import 'package:warshasy/features/static_data/data/datasources/database_remote_datasource.dart';
+import 'package:warshasy/features/static_data/data/models/city_model.dart';
+import 'package:warshasy/features/static_data/data/models/service_category_model.dart';
+import 'package:warshasy/features/static_data/domain/entites/city.dart';
+import 'package:warshasy/features/static_data/domain/entites/region.dart';
+import 'package:warshasy/features/static_data/domain/entites/service.dart';
+import 'package:warshasy/features/static_data/domain/repositories/static_data_repository.dart';
 
-class DatabaseRepositoryImpl implements DatabaseRepository {
+class DatabaseRepositoryImpl implements StaticDataRepository {
   final DatabaseRemoteDataSource remoteDataSource;
 
   DatabaseRepositoryImpl({required this.remoteDataSource});
