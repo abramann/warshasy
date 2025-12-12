@@ -32,11 +32,14 @@ class StaticDataLoaded extends StaticDataState {
     return cities.expand((city) => city.regions).toList();
   }
 
+  List<City> get allCities => cities;
+
   List<Service> get allServices {
     return serviceCategories.expand((category) => category.services).toList();
   }
 
   City? getCityById(int id) {
+    if (id < 0) return null;
     try {
       return cities.firstWhere((city) => city.id == id);
     } catch (_) {
@@ -76,6 +79,15 @@ class StaticDataLoaded extends StaticDataState {
   List<Region> getRegionsByCity(int cityId) {
     final city = getCityById(cityId);
     return city?.regions ?? [];
+  }
+
+  Region? getRegionById(int id) {
+    if (id < 0) return null;
+    try {
+      return allRegions.firstWhere((region) => region.id == id);
+    } catch (_) {
+      return null;
+    }
   }
 
   List<Service> getServicesByCategory(int categoryId) {

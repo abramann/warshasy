@@ -11,7 +11,9 @@ import 'package:warshasy/core/theme/app_shadows.dart';
 import 'package:warshasy/core/theme/app_gradients.dart';
 import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
+import 'package:warshasy/features/home/presentation/widgets/location_selector.dart';
 import 'package:warshasy/features/static_data/domain/entites/city.dart';
+import 'package:warshasy/features/static_data/domain/entites/location.dart';
 import 'package:warshasy/features/static_data/domain/presentation/bloc/static_data_bloc.dart';
 import 'package:warshasy/features/home/presentation/widgets/common_widgets.dart';
 import 'package:warshasy/features/home/presentation/widgets/custom_scaffold.dart';
@@ -30,7 +32,7 @@ class _HomePageState extends State<HomePage> {
       context.read<StaticDataBloc>().state as StaticDataLoaded;
   late final cities = staticData.cities;
   bool isLoading = false;
-
+  late int _selectedCityId = user?.location.cityId ?? 1;
   @override
   Widget build(BuildContext context) {
     return BlocListener<CurrentUserBloc, CurrentUserState>(
@@ -61,7 +63,6 @@ class _HomePageState extends State<HomePage> {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final isTablet = MediaQuery.of(context).size.width > 600;
-    final l = AppLocalizations.of(context);
 
     return CustomerScaffold(
       appBar: CommonWidgets.buildDefaultAppBar(context),
@@ -159,48 +160,19 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildLocationSelector(BuildContext context) {
-    return InkWell(
-      onTap: () => _showCityBottomSheet(context),
-      borderRadius: BorderRadius.circular(AppRadius.medium),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(AppRadius.medium),
-          boxShadow: AppShadows.subtle,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.location_on,
-                  color: AppColors.accent,
-                  size: 20,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '${user?.location.cityName}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            Icon(Icons.keyboard_arrow_down, color: AppColors.textTertiary),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildSectionHeader(TextTheme textTheme) {
     return Text(
       AppLocalizations.of(context).homeSectionTitle,
       style: textTheme.titleMedium?.copyWith(color: AppColors.textPrimary),
+    );
+  }
+
+  Widget _buildLocationSelector(BuildContext context) {
+    return LocationSelector(
+      type: LocationType.city,
+      selectedId: _selectedCityId,
+      onSelected:
+          (cityId) => _onCitySelected(context, staticData.getCityById(cityId)!),
     );
   }
 
@@ -308,126 +280,16 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showCityBottomSheet(BuildContext context) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder:
-          (context) => BasePage(
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: 20 + MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: DraggableScrollableSheet(
-                expand: false,
-                initialChildSize: 0.6,
-                minChildSize: 0.4,
-                maxChildSize: 0.9,
-                builder: (context, scrollController) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header
-                      Text(
-                        context.string('chooseCity'),
-                        style: textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // City List
-                      Expanded(
-                        child: ListView.separated(
-                          controller: scrollController,
-                          itemCount: cities.length,
-                          separatorBuilder:
-                              (context, index) => const Divider(height: 1),
-                          itemBuilder: (context, index) {
-                            final city = cities[index];
-                            final isSelected =
-                                user?.location.cityName == city.nameAr;
-
-                            return ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              leading: Icon(
-                                Icons.location_city,
-                                color:
-                                    isSelected
-                                        ? AppColors.primary
-                                        : AppColors.textTertiary,
-                              ),
-                              title: Text(
-                                city.nameAr,
-                                style: textTheme.bodyLarge?.copyWith(
-                                  fontWeight:
-                                      isSelected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                  color:
-                                      isSelected
-                                          ? AppColors.primary
-                                          : AppColors.textPrimary,
-                                ),
-                              ),
-                              trailing:
-                                  isSelected
-                                      ? Icon(
-                                        Icons.check_circle,
-                                        color: AppColors.primary,
-                                      )
-                                      : null,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.medium,
-                                ),
-                              ),
-                              onTap: () {
-                                _onCitySelected(context, city);
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-    );
-  }
-
   void _onCitySelected(BuildContext context, City city) {
-    // Update user location
-    if (user != null) {
-      //user!.location.cityId = city.id;
-      //context.read<CurrentUserBloc>().add(UpdateCurrentUser(user: ));
-    }
-
     // Close bottom sheet
-    Navigator.pop(context);
+    // Navigator.pop(context);
+
+    setState(() {
+      _selectedCityId = city.id;
+    });
 
     // Show confirmation
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('تم اختيار ${city.nameAr}'),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    // context.showSuccessSnackBar('تم اختيار ${city.nameAr}');
   }
 
   void _navigateToSubcategory(BuildContext context, String category) {

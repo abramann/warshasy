@@ -7,7 +7,7 @@ import '../models/region_model.dart';
 import '../models/service_category_model.dart';
 import '../models/service_model.dart';
 
-abstract class DatabaseRemoteDataSource {
+abstract class StaticDataRemoteDataSource {
   Future<List<CityModel>> getAllCities();
   Future<List<RegionModel>> getRegionsByCity(int cityId);
   Future<List<RegionModel>> getAllRegions();
@@ -16,11 +16,11 @@ abstract class DatabaseRemoteDataSource {
   Future<List<ServiceModel>> getAllServices();
 }
 
-class DatabaseRemoteDataSourceImpl implements DatabaseRemoteDataSource {
+class StaticDataRemoteDataSourceImpl implements StaticDataRemoteDataSource {
   final SupabaseClient supabaseClient;
   final network = sl<Network>();
 
-  DatabaseRemoteDataSourceImpl({required this.supabaseClient});
+  StaticDataRemoteDataSourceImpl({required this.supabaseClient});
 
   @override
   Future<List<CityModel>> getAllCities() async {
@@ -29,7 +29,7 @@ class DatabaseRemoteDataSourceImpl implements DatabaseRemoteDataSource {
           .from('cities')
           .select()
           .eq('is_active', true)
-          .order('name_ar', ascending: true);
+          .order('display_order', ascending: true);
 
       return (response as List)
           .map((json) => CityModel.fromJson(json))

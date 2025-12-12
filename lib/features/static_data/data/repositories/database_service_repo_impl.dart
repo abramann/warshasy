@@ -5,10 +5,11 @@ import 'package:warshasy/features/static_data/data/models/service_category_model
 import 'package:warshasy/features/static_data/domain/entites/city.dart';
 import 'package:warshasy/features/static_data/domain/entites/region.dart';
 import 'package:warshasy/features/static_data/domain/entites/service.dart';
+import 'package:warshasy/features/static_data/domain/entites/service_category.dart';
 import 'package:warshasy/features/static_data/domain/repositories/static_data_repository.dart';
 
 class DatabaseRepositoryImpl implements StaticDataRepository {
-  final DatabaseRemoteDataSource remoteDataSource;
+  final StaticDataRemoteDataSource remoteDataSource;
 
   DatabaseRepositoryImpl({required this.remoteDataSource});
 

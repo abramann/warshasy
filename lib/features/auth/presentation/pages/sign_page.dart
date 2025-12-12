@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:warshasy/core/route/app_routes.dart';
 import 'package:warshasy/core/utils/phone_number.dart';
 import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
@@ -64,11 +65,7 @@ class _SignPageState extends State<SignPage> {
                 _isButtonPressed = false;
               });
 
-              context.push(
-                '/login/verify-code',
-                extra: PhoneNumber.format(_phoneController.text),
-              );
-              return;
+              context.pushNamed(AppRouteName.verifyCode);
             }
           },
           builder: (context, state) {

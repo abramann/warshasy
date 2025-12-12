@@ -11,47 +11,25 @@ import 'package:warshasy/core/utils/injection_container.dart';
 import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
 import 'package:warshasy/features/home/presentation/widgets/custom_scaffold.dart';
+import 'package:warshasy/features/static_data/domain/presentation/bloc/static_data_bloc.dart';
 import 'package:warshasy/features/user/domain/presentation/blocs/current_user_bloc/current_user_bloc.dart';
 import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc/user_bloc.dart';
 
 class ProfilePage extends StatefulWidget {
-  final String? userId;
-
-  const ProfilePage({super.key, this.userId});
+  const ProfilePage({super.key});
 
   @override
   State<StatefulWidget> createState() => ProfilePageState();
 }
 
 class ProfilePageState extends State<ProfilePage> {
-  late final bool _isOwnProfile;
-  late final String _targetUserId;
-
-  @override
-  void initState() {
-    super.initState();
-
-    final currentUserId = _getCurrentUserId(context);
-    _targetUserId = widget.userId ?? currentUserId!;
-    _isOwnProfile = _targetUserId == currentUserId;
-
-    // Load user based on whether it's own profile or not
-    if (_isOwnProfile) {
-      // Current user is already loaded in warshasy.dart, but we can force refresh
-      final currentUserBloc = context.read<CurrentUserBloc>();
-      if (currentUserBloc.currentUser == null) {
-        currentUserBloc.add(LoadCurrentUser(userId: _targetUserId));
-      }
-    } else {
-      // Load other user's profile using UserBloc
-      sl<UserBloc>().add(LoadUserRequested(userId: _targetUserId));
-    }
-  }
+  bool _isOwnProfile = false;
+  String _targetUserId = '';
 
   String? _getCurrentUserId(BuildContext context) {
-    final authState = context.read<AuthBloc>().state;
-    if (authState is Authenticated) {
-      return authState.session.userId;
+    final currUserBloc = context.read<CurrentUserBloc>().state;
+    if (currUserBloc is CurrentUserLoaded) {
+      return currUserBloc.user.id;
     }
     return null;
   }
@@ -59,12 +37,30 @@ class ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return BasePage(
-      child: CustomerScaffold(
-        appBar: _buildAppBar(context, _isOwnProfile),
-        body:
-            _isOwnProfile
-                ? _buildCurrentUserProfile()
-                : _buildOtherUserProfile(),
+      child: BlocBuilder<UserBloc, UserState>(
+        builder: (context, state) {
+          if (state is UserLoaded) {
+            final currentUserId = _getCurrentUserId(context);
+            _targetUserId = state.user.id;
+            _isOwnProfile =
+                currentUserId != null && currentUserId == _targetUserId;
+            return CustomerScaffold(
+              appBar: _buildAppBar(context, _isOwnProfile),
+              body:
+                  _isOwnProfile
+                      ? _buildCurrentUserProfile()
+                      : _buildOtherUserProfile(),
+            );
+          }
+          if (state is UserError) {
+            return _buildErrorTryAgainState(
+              state.userId,
+              state.failure.message,
+            );
+          }
+
+          return const Center(child: CircularProgressIndicator());
+        },
       ),
     );
   }
@@ -119,6 +115,40 @@ class ProfilePageState extends State<ProfilePage> {
 
           return const Center(child: CircularProgressIndicator());
         },
+      ),
+    );
+  }
+
+  Widget _buildErrorTryAgainState(String userId, String message) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 60, color: AppColors.error),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: textTheme.bodyLarge?.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                context.read<UserBloc>().add(
+                  LoadUserRequested(userId: userId, forceRefresh: true),
+                );
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('إعادة المحاولة'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -191,17 +221,28 @@ class ProfilePageState extends State<ProfilePage> {
 // ============================================
 // Profile Content Widget
 // ============================================
-class _ProfileContent extends StatelessWidget {
+class _ProfileContent extends StatefulWidget {
   final User user;
   final bool isOwnProfile;
   final bool isUpdating;
-
-  const _ProfileContent({
+  _ProfileContent({
     required this.user,
     required this.isOwnProfile,
     this.isUpdating = false,
   });
 
+  @override
+  State<StatefulWidget> createState() {
+    return _ProfileContentState();
+  }
+}
+
+class _ProfileContentState extends State<_ProfileContent> {
+  User get user => widget.user;
+  bool get isOwnProfile => widget.isOwnProfile;
+  bool get isUpdating => widget.isUpdating;
+  late final staticData =
+      context.read<StaticDataBloc>().state as StaticDataLoaded;
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -342,6 +383,9 @@ class _ProfileContent extends StatelessWidget {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
+    final location = user.location;
+    final city = staticData.getCityById(location.cityId);
+    final region = staticData.getRegionById(location.regionId ?? -1);
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
@@ -373,7 +417,7 @@ class _ProfileContent extends StatelessWidget {
               icon: Icons.location_on,
               label: 'الموقع',
               value:
-                  '${user.location!.cityName} - ${user.location!.regionName}',
+                  '${city!.nameAr} ${region != null ? ' - ${region.name}' : ''}',
             ),
           ],
         ],

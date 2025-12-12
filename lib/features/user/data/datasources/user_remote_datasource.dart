@@ -15,7 +15,7 @@ abstract class UserRemoteDataSource {
   Future<UserModel> createUser({
     required String phone,
     required String fullName,
-    Location? location,
+    required Location? location,
     String? bio,
   });
   Future<UserModel> updateUser({required User user});
@@ -67,18 +67,16 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
   Future<UserModel> createUser({
     required String phone,
     required String fullName,
-    Location? location,
+    required Location? location,
     String? bio,
   }) async {
     return await network.guard(() async {
       final userData = {
         'phone': phone,
         'full_name': fullName,
-        if (location != null) ...{
-          'city': location.cityName,
-          'region': location.regionName,
-        },
-        if (bio != null) 'bio': bio,
+        'city_id': location?.cityId,
+        'area_id': location?.regionId,
+        'bio': bio,
       };
 
       final response =
@@ -102,9 +100,9 @@ class UserRemoteDataSourceImpl implements UserRemoteDataSource {
       final updatedAt = user.updatedAt?.toIso8601String();
       updateData['full_name'] = fullName;
       updateData['phone'] = phone;
-      if (userLocation != null) {
-        updateData['city'] = userLocation.cityId;
-        updateData['region'] = userLocation.regionId;
+      updateData['city_id'] = userLocation.cityId;
+      if (userLocation.regionId != null) {
+        updateData['area_id'] = userLocation.regionId;
       }
       if (avatarUrl != null) updateData['avatar_url'] = avatarUrl;
       if (bio != null) updateData['bio'] = bio;

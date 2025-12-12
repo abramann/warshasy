@@ -5,10 +5,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:warshasy/core/localization/localization.dart';
 import 'package:warshasy/core/utils/auth_guard.dart';
+import 'package:warshasy/core/utils/injection_container.dart';
 import 'package:warshasy/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:warshasy/features/auth/presentation/pages/sign_page.dart';
 import 'package:warshasy/features/auth/presentation/pages/verify_code_page.dart';
 import 'package:warshasy/features/home/presentation/pages/home_page.dart';
+import 'package:warshasy/features/home/presentation/pages/startup_page.dart';
+import 'package:warshasy/features/user/domain/presentation/blocs/current_user_bloc/current_user_bloc.dart';
+import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc/user_bloc.dart';
 import 'package:warshasy/features/user/domain/presentation/pages/profile_page.dart';
 import 'package:warshasy/features/user/domain/presentation/pages/profile_setup_page.dart';
 
@@ -26,12 +30,17 @@ class AppRouter {
   static String getCurrentRoute(BuildContext ctx) =>
       GoRouterState.of(ctx).uri.toString();
   static final GoRouter router = GoRouter(
-    initialLocation: AppRoutePath.home,
+    initialLocation: AppRoutePath.root,
     //refreshListenable: GoRouterRefreshStream(authBloc.stream),
     redirect: (context, state) => _authGuard.handleAuthState(context, state),
     routes: [
       // ROOT -> HOME
-      GoRoute(path: AppRoutePath.root, redirect: (_, __) => AppRoutePath.home),
+      GoRoute(
+        path: AppRoutePath.root,
+        pageBuilder:
+            (context, state) =>
+                MaterialPage(key: state.pageKey, child: StartupPage()),
+      ),
 
       // PUBLIC HOME
       GoRoute(
@@ -49,11 +58,10 @@ class AppRouter {
                 MaterialPage(key: state.pageKey, child: const SignPage()),
         routes: [
           GoRoute(
-            path: 'verify-code',
+            path: AppRoutePath.verifyCode,
             name: AppRouteName.verifyCode,
             builder: (context, state) {
-              final phone = state.extra as String;
-              return VerifyCodePage(phoneNumber: phone);
+              return VerifyCodePage();
             },
           ),
         ],
@@ -63,7 +71,21 @@ class AppRouter {
       GoRoute(
         path: AppRoutePath.profile,
         name: AppRouteName.profile,
-        builder: (context, state) => ProfilePage(),
+        builder:
+            (context, state) => BlocProvider(
+              create:
+                  (context) =>
+                      sl<UserBloc>()..add(
+                        LoadUserRequested(
+                          userId:
+                              (context.read<CurrentUserBloc>().state
+                                      as CurrentUserLoaded)
+                                  .user
+                                  .id,
+                        ),
+                      ),
+              child: ProfilePage(),
+            ),
         routes: [
           GoRoute(
             path: 'profile-setup',
@@ -74,8 +96,16 @@ class AppRouter {
             path: ':id',
             name: AppRouteName.profileDetail,
             builder: (context, state) {
-              final id = state.pathParameters['id']!;
-              return ProfilePage(userId: id);
+              return BlocProvider(
+                create:
+                    (context) =>
+                        sl<UserBloc>()..add(
+                          LoadUserRequested(
+                            userId: state.pathParameters['id']!,
+                          ),
+                        ),
+                child: ProfilePage(),
+              );
             },
           ),
         ],

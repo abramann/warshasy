@@ -7,6 +7,7 @@
 
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:warshasy/core/network/network.dart';
 import 'package:warshasy/core/env/call_me_bot.dart';
 import 'package:warshasy/features/auth/domain/entities/auth_session.dart';
@@ -18,23 +19,32 @@ import 'package:http/http.dart' as http;
 import 'package:warshasy/features/user/domain/entities/user.dart' as Warsha;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// Abstract class defines what operations we can do
 abstract class AuthRemoteDataSource {
   Future<void> signOut();
-  Future<void> sendVerificationCode({required String phone});
+
+  // CHANGED: now returns the otpSessionId (UUID from DB)
+  Future<String> sendVerificationCode({required String phone});
+
+  // CHANGED: we don't need phone here anymore, we need:
+  // - otpSessionId: the row in otp_sessions
+  // - code: what the user typed
+  // - deviceId: your per-device identifier (for device_sessions)
   Future<AuthSession> verifyCodeAndCreateSession({
-    required String phone,
+    required String otpSessionId,
     required String code,
     required String deviceId,
   });
+
   Future<AuthSession?> restoreSession({
     required String deviceId,
     required String sessionToken,
   });
+
   Future<void> invalidateSession({
     required String deviceId,
     required String sessionToken,
   });
+
   Stream<AuthState> get authStateChanges;
 }
 
@@ -105,54 +115,54 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
+  @override
   Future<AuthSession> verifyCodeAndCreateSession({
-    required String phone,
+    required String otpSessionId,
     required String code,
     required String deviceId,
   }) async {
-    final now = DateTime.now().toIso8601String();
+    final now = DateTime.now();
+    final nowIso = now.toIso8601String();
 
-    // 1) Get a valid OTP
+    // 1) Get a valid OTP row BY ID + CODE (no phone needed here)
     final otpRow =
         await supabase
             .from('otp_sessions')
             .select()
-            .eq('phone', phone)
+            .eq('id', otpSessionId)
             .eq('otp_code', code)
-            //.gt('expires_at', DateTime.now().toIso8601String())
-            // .isFilter('used_at', null)
-            // .order('created_at', ascending: false)
-            //.limit(1)
+            //   .isFilter('used_at', null)
+            //   .gt('expires_at', nowIso)
             .maybeSingle();
 
     if (otpRow == null) {
-      throw Exception('Invalid or expired code'); // map to a Failure later
+      throw Exception('Invalid or expired code'); // map to Failure later
     }
 
-    // 2) Mark OTP as used
+    final phone = otpRow['phone'] as String;
+
+    // 2) Get or create user by phone
+    final user =
+        (await getUser(phone: phone)) ?? (await createUser(phone: phone));
+
+    final userId = user.id;
+
+    // 3) Link OTP to user and mark as used
     await supabase
         .from('otp_sessions')
-        .update({'used_at': now})
-        .eq('id', otpRow['id']);
+        .update({'used_at': nowIso, 'user_id': userId})
+        .eq('id', otpSessionId);
 
-    // Get or create user
-    final user =
-        (await getUser(phone: phone)) ??
-        (await createUser(phone: phone)) as Warsha.User?;
-
-    final userId = user!.id;
-    final fullName = user.fullName;
-    final userLocation = user.location;
     // 4) Generate a session token
     final sessionToken = _generateSessionToken();
-    final expiresAt = DateTime.now().add(const Duration(days: 30));
+    final expiresAt = now.add(const Duration(days: 30));
 
-    // 5) Upsert device session
+    // 5) Upsert device session (same as before, but using deviceId param)
     await supabase.from('device_sessions').upsert({
       'user_id': userId,
       'device_id': deviceId,
       'session_token': sessionToken,
-      'created_at': DateTime.now().toIso8601String(),
+      'created_at': nowIso,
       'expires_at': expiresAt.toIso8601String(),
       'revoked_at': null,
     }, onConflict: 'user_id,device_id');
@@ -174,7 +184,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
             .insert({
               'full_name': 'مستخدم جديد',
               'phone': phone,
-              'updated_at': DateTime.now().toIso8601String(),
+              'city_id': 1, // Default city
             })
             .select()
             .single();
@@ -211,33 +221,40 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> sendVerificationCode({required String phone}) async {
+  Future<String> sendVerificationCode({required String phone}) async {
     final now = DateTime.now();
     final expiresAt = now.add(const Duration(minutes: 5));
     final otp = _generateOtp(length: 4);
 
-    // 1) Delete old OTPs for this phone
-    final old =
+    // 1) Delete old OTPs for this phone (optional but you already do it)
+    await supabase.from('otp_sessions').delete().eq('phone', phone);
+
+    // 2) Insert new row and get its id
+    final inserted =
         await supabase
             .from('otp_sessions')
-            .select()
-            .eq('phone', phone)
-            .maybeSingle();
-    if (old != null) {
-      await supabase.from('otp_sessions').delete().eq('phone', phone);
-    }
-    // 2) Insert new row
-    await supabase.from('otp_sessions').insert({
-      'phone': phone,
-      'otp_code': otp,
-      'expires_at': expiresAt.toIso8601String(),
-    });
+            .insert({
+              'phone': phone,
+              'otp_code': otp,
+              'expires_at': expiresAt.toIso8601String(),
+            })
+            .select('id') // only need id
+            .single();
 
-    // 3) Send via WhatsApp
-    // await _sendWhatsAppOtp(phone, otp);
+    final otpSessionId = inserted['id'] as String;
+
+    // 3) Send via WhatsApp / SMS (still optional)
+    // await _sendWhatsAppCode(phone, otp);
+
+    // 4) Return the OTP session id to client
+    return otpSessionId;
   }
 
   String _generateOtp({int length = 4}) {
+    if (kDebugMode) {
+      return '1234'; // Fixed OTP for testing
+    }
+
     final rand = Random.secure();
     final min = pow(10, length - 1).toInt();
     final max = pow(10, length).toInt() - 1;

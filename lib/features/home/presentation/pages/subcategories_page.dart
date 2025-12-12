@@ -3,12 +3,14 @@ import 'package:warshasy/core/localization/localization.dart';
 
 // Data Models
 class ServiceCategory {
+  final int id;
   final String name;
   final String icon;
   final Color color;
   final List<Subcategory> subcategories;
 
   ServiceCategory({
+    this.id = 0,
     required this.name,
     required this.icon,
     required this.color,

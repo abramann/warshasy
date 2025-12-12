@@ -18,6 +18,14 @@ class StartupPage extends StatefulWidget {
 }
 
 class StartupPageState extends State<StartupPage> {
+  @override
+  void initState() {
+    super.initState();
+
+    context.read<StaticDataBloc>().add(LoadStaticData());
+    context.read<AuthBloc>().add(AuthStartup());
+  }
+
   Widget _buildStartupUI(BuildContext context) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
@@ -133,65 +141,58 @@ class StartupPageState extends State<StartupPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider.value(value: sl<StaticDataBloc>()..add(LoadStaticData())),
-        BlocProvider.value(value: sl<AuthBloc>()..add(AuthStartup())),
-        BlocProvider.value(value: sl<CurrentUserBloc>()),
+    return MultiBlocListener(
+      listeners: [
+        // Auth listener - Load current user when authenticated
+        BlocListener<AuthBloc, AuthState>(
+          listener: (context, authState) {
+            if (authState is Authenticated) {
+              context.read<CurrentUserBloc>().add(
+                LoadCurrentUser(userId: authState.session.userId),
+              );
+            } else {
+              context.read<CurrentUserBloc>().add(ClearCurrentUser());
+            }
+          },
+        ),
+        // StaticData listener
+        BlocListener<StaticDataBloc, StaticDataState>(
+          listener: (context, staticDataState) {
+            if (staticDataState is StaticDataLoaded) {
+              // Navigate to home page after static data is loaded
+              context.goNamed(AppRouteName.home);
+            } else if (staticDataState is StaticDataError) {
+              SnackBarUtils.showError(
+                context,
+                'فشل في تحميل البيانات: ${staticDataState.failure.message}',
+                action: SnackBarAction(
+                  label: 'إعادة المحاولة',
+                  onPressed: () {
+                    context.read<StaticDataBloc>().add(
+                      LoadStaticData(forceRefresh: true),
+                    );
+                  },
+                ),
+              );
+            }
+            if (staticDataState is StaticDataError) {
+              SnackBarUtils.showError(
+                context,
+                'فشل في تحميل البيانات: ${staticDataState.failure.message}',
+                action: SnackBarAction(
+                  label: 'إعادة المحاولة',
+                  onPressed: () {
+                    context.read<StaticDataBloc>().add(
+                      LoadStaticData(forceRefresh: true),
+                    );
+                  },
+                ),
+              );
+            }
+          },
+        ),
       ],
-      child: MultiBlocListener(
-        listeners: [
-          // Auth listener - Load current user when authenticated
-          BlocListener<AuthBloc, AuthState>(
-            listener: (context, authState) {
-              if (authState is Authenticated) {
-                context.read<CurrentUserBloc>().add(
-                  LoadCurrentUser(userId: authState.session.userId),
-                );
-              } else {
-                context.read<CurrentUserBloc>().add(ClearCurrentUser());
-              }
-            },
-          ),
-          // StaticData listener
-          BlocListener<StaticDataBloc, StaticDataState>(
-            listener: (context, staticDataState) {
-              if (staticDataState is StaticDataLoaded) {
-                // Navigate to home page after static data is loaded
-                context.go(AppRouteName.home);
-              } else if (staticDataState is StaticDataError) {
-                SnackBarUtils.showError(
-                  context,
-                  'فشل في تحميل البيانات: ${staticDataState.failure.message}',
-                  action: SnackBarAction(
-                    label: 'إعادة المحاولة',
-                    onPressed: () {
-                      context.read<StaticDataBloc>().add(
-                        LoadStaticData(forceRefresh: true),
-                      );
-                    },
-                  ),
-                );
-              }
-              if (staticDataState is StaticDataError) {
-                SnackBarUtils.showError(
-                  context,
-                  'فشل في تحميل البيانات: ${staticDataState.failure.message}',
-                  action: SnackBarAction(
-                    label: 'إعادة المحاولة',
-                    onPressed: () {
-                      context.read<StaticDataBloc>().add(
-                        LoadStaticData(forceRefresh: true),
-                      );
-                    },
-                  ),
-                );
-              }
-            },
-          ),
-        ],
-        child: _buildStartupUI(context),
-      ),
+      child: _buildStartupUI(context),
     );
   }
 }

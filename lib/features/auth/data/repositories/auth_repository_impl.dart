@@ -11,15 +11,15 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({required this.remote, required this.local});
 
   @override
-  Future<AuthSession> signInWithPhone({
-    required String phone,
+  Future<AuthSession> signIn({
+    required String otpSessionId,
     required String code,
   }) async {
     final deviceId = await DeviceInfo.getID();
 
     final session = await remote.verifyCodeAndCreateSession(
-      phone: phone,
       code: code,
+      otpSessionId: otpSessionId,
       deviceId: deviceId,
     );
 
@@ -57,7 +57,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> sendVerificationCode({required String phone}) async {
+  Future<String> sendVerificationCode({required String phone}) async {
     return await remote.sendVerificationCode(phone: phone);
   }
 

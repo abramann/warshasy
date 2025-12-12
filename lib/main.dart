@@ -10,3 +10,14 @@ Future<void> main() async {
 
   runApp(const Warshasy());
 }
+
+// Dummy widget to launch app faster when entirely rebuild since Attaching is mostly used during development
+class DummyApp extends StatelessWidget {
+  const DummyApp({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(backgroundColor: Colors.blue, body: Text('Dummy App')),
+    );
+  }
+}

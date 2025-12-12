@@ -10,9 +10,15 @@ class AuthGuard {
     BuildContext? context,
     GoRouterState state,
   ) async {
+    final location = state.fullPath ?? state.uri.toString();
+
+    // Blocs not initialized yet
+    if (location.isEmpty || location == AppRoutePath.root) {
+      return null;
+    }
+
     if (context == null) return null;
     final authState = context.read<AuthBloc>().state;
-    final location = state.fullPath ?? state.uri.toString();
 
     final isLoggedIn = authState is Authenticated;
 

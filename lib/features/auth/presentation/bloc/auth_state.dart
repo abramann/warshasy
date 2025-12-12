@@ -22,5 +22,7 @@ class AuthFailureState extends AuthState {
 
 class VerificationCodeSent extends AuthState {
   final String phone;
-  VerificationCodeSent(this.phone);
+  final String otpSessionId;
+
+  VerificationCodeSent({required this.phone, required this.otpSessionId});
 }

@@ -64,8 +64,8 @@ class AvatarUploaded extends UserState {
 
 class UserError extends UserState {
   final Failure failure;
-
-  const UserError({required this.failure});
+  final String userId;
+  const UserError({required this.userId, required this.failure});
 
   @override
   List<Object> get props => [failure];

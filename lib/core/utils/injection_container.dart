@@ -108,8 +108,8 @@ void _initUser() {
 // Add this method to your existing init() function
 void _initDatabase() {
   // Data sources
-  sl.registerLazySingleton<DatabaseRemoteDataSource>(
-    () => DatabaseRemoteDataSourceImpl(supabaseClient: sl()),
+  sl.registerLazySingleton<StaticDataRemoteDataSource>(
+    () => StaticDataRemoteDataSourceImpl(supabaseClient: sl()),
   );
 
   // Repositories

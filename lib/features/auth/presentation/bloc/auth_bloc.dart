@@ -39,8 +39,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
-      await authRepository.sendVerificationCode(phone: event.phone);
-      emit(VerificationCodeSent(event.phone));
+      final otpSessionId = await authRepository.sendVerificationCode(
+        phone: event.phone,
+      );
+      emit(
+        VerificationCodeSent(phone: event.phone, otpSessionId: otpSessionId),
+      );
     } catch (e) {
       emit(AuthFailureState('فشل في إرسال رمز التحقق'));
       emit(Unauthenticated());
@@ -51,8 +55,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(AuthLoading());
 
     try {
-      final session = await authRepository.signInWithPhone(
-        phone: event.phone,
+      final session = await authRepository.signIn(
+        otpSessionId: event.sessionId,
         code: event.code,
       );
       emit(Authenticated(session));

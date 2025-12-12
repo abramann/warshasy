@@ -43,4 +43,28 @@ class User extends Equatable {
     createdAt,
     updatedAt,
   ];
+
+  User copyWith({
+    String? id,
+    String? phone,
+    String? fullName,
+    Location? location,
+    String? avatarUrl,
+    String? bio,
+    bool? isActive,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return User(
+      id: id ?? this.id,
+      phone: phone ?? this.phone,
+      fullName: fullName ?? this.fullName,
+      location: location ?? this.location,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      bio: bio ?? this.bio,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 }

@@ -4,12 +4,12 @@ import '../../../../core/errors/failures.dart';
 import '../../../user/domain/entities/user.dart';
 
 abstract class AuthRepository {
-  Future<AuthSession> signInWithPhone({
-    required String phone,
+  Future<AuthSession> signIn({
+    required String otpSessionId,
     required String code,
   });
 
-  Future<void> sendVerificationCode({required String phone});
+  Future<String> sendVerificationCode({required String phone});
 
   Future<void> signOut();
 

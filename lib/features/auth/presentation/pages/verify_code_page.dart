@@ -4,14 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:warshasy/core/errors/errors.dart';
 import 'package:warshasy/core/presentation/pages/loading_page.dart';
 import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
 
 class VerifyCodePage extends StatefulWidget {
-  final String phoneNumber;
-  const VerifyCodePage({Key? key, required this.phoneNumber}) : super(key: key);
+  const VerifyCodePage({Key? key}) : super(key: key);
 
   @override
   State<VerifyCodePage> createState() => _VerifyCodePageState();
@@ -28,6 +26,10 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
 
   bool _isResendEnabled = false;
   int _resendCountdown = 60;
+  late final _otpSessionId =
+      (context.read<AuthBloc>().state as VerificationCodeSent).otpSessionId;
+  late final _phone =
+      (context.read<AuthBloc>().state as VerificationCodeSent).phone;
 
   @override
   void initState() {
@@ -105,7 +107,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
     final code = _getOtpCode();
     if (code.length == 4) {
       context.read<AuthBloc>().add(
-        SignInRequested(phone: widget.phoneNumber, code: code),
+        SignInRequested(sessionId: _otpSessionId, code: code),
       );
     } else {
       context.showErrorSnackBar('الرجاء إدخال رمز التحقق كاملاً');
@@ -115,7 +117,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
   void _resendCode() {
     if (_isResendEnabled) {
       context.read<AuthBloc>().add(
-        SendVerificationCodeRequested(phone: widget.phoneNumber),
+        SendVerificationCodeRequested(phone: _phone),
       );
       _startResendTimer();
       context.showSuccessSnackBar('تم إعادة إرسال الرمز');
@@ -212,7 +214,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                           ),
                           const TextSpan(text: ' على الرقم\n'),
                           TextSpan(
-                            text: widget.phoneNumber,
+                            text: _phone,
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: Theme.of(context).primaryColor,

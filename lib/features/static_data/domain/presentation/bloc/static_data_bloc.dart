@@ -12,35 +12,6 @@ import 'package:warshasy/features/static_data/domain/repositories/static_data_re
 part 'static_data_event.dart';
 part 'static_data_state.dart';
 
-class LocationResolver {
-  final StaticDataBloc staticDataBloc;
-
-  LocationResolver(this.staticDataBloc);
-
-  Location? resolveLegacyLocation(Location? location) {
-    if (location == null || !location.needsResolution) return location;
-
-    final state = staticDataBloc.state;
-    if (state is! StaticDataLoaded) return null;
-
-    // Find city by name
-    final city = state.getCityByName(location.cityName);
-    if (city == null) return null;
-
-    // Find region by name if provided
-    Region? region;
-    if (location.regionName != null) {
-      try {
-        region = city.regions.firstWhere((r) => r.name == location.regionName);
-      } catch (_) {
-        // Region not found, use null
-      }
-    }
-
-    return Location.fromCityAndRegion(city: city, region: region);
-  }
-}
-
 class StaticDataBloc extends Bloc<StaticDataEvent, StaticDataState> {
   final StaticDataRepository staticDataRepository;
 
@@ -78,16 +49,16 @@ class StaticDataBloc extends Bloc<StaticDataEvent, StaticDataState> {
       // Load cities and service categories in parallel
       final results = await Future.wait([
         staticDataRepository.getAllCities(),
-        staticDataRepository.getAllServiceCategories(),
+        //  staticDataRepository.getAllServiceCategories(),
       ]);
 
       _cachedCities = results[0] as List<City>;
-      _cachedCategories = results[1] as List<ServiceCategory>;
+      // _cachedCategories = results[1] as List<ServiceCategory>;
 
       emit(
         StaticDataLoaded(
           cities: _cachedCities!,
-          serviceCategories: _cachedCategories!,
+          serviceCategories: [], //_cachedCategories!,
         ),
       );
     } on Exception catch (e) {

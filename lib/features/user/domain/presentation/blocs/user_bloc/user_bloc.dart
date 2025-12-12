@@ -41,7 +41,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       emit(UserLoaded(user: user));
     } on Exception catch (e) {
       final failure = ErrorMapper.map(e);
-      emit(UserError(failure: failure));
+      emit(UserError(userId: event.userId, failure: failure));
     }
   }
 
@@ -60,7 +60,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         emit(UserLoaded(user: _cachedUser!));
       } else {
         final failure = ErrorMapper.map(e);
-        emit(UserError(failure: failure));
+        emit(UserError(userId: event.userId, failure: failure));
       }
     }
   }
@@ -81,7 +81,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       emit(UsersLoaded(users: users));
     } on Exception catch (e) {
       final failure = ErrorMapper.map(e);
-      emit(UserError(failure: failure));
+      emit(UserError(userId: '', failure: failure));
     }
   }
 

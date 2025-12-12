@@ -7,13 +7,13 @@ abstract class AuthEvent extends Equatable {
 }
 
 class SignInRequested extends AuthEvent {
-  final String phone;
+  final String sessionId;
   final String code;
 
-  SignInRequested({required this.phone, required this.code});
+  SignInRequested({required this.sessionId, required this.code});
 
   @override
-  List<Object> get props => [phone, code];
+  List<Object> get props => [sessionId, code];
 }
 
 class AuthStartup extends AuthEvent {}

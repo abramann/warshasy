@@ -110,6 +110,7 @@ class AppLocalizations {
       'noServicesFound': 'لم يتم العثور على خدمات',
       'popular': 'شائع',
       'openingItem': 'جاري فتح',
+      'selectCity': 'اختر المدينة',
     },
   };
 
@@ -161,6 +162,7 @@ class AppLocalizations {
   String get noServicesFound => _string('noServicesFound');
   String get popular => _string('popular');
   String get openingItem => _string('openingItem');
+  String get selectCity => _string('selectCity');
 }
 
 class _AppLocalizationsDelegate

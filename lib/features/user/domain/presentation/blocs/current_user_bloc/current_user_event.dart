@@ -45,7 +45,6 @@ class UploadCurrentUserAvatar extends CurrentUserEvent {
 
 class DeleteCurrentUserAvatar extends CurrentUserEvent {
   final String userId;
-
   DeleteCurrentUserAvatar({required this.userId});
 
   @override

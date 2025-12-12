@@ -27,6 +27,7 @@ class AppRoutePath {
 
   // Auth
   static const login = '/login';
+  static const verifyCode = 'verify-code';
 
   // Profile
   static const profile = '/profile';

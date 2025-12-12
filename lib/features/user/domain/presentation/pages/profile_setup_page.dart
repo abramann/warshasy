@@ -1,19 +1,19 @@
-// ============================================
-// UPDATED profile_setup_page.dart
-// ============================================
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:warshasy/core/localization/localization.dart';
 import 'package:warshasy/core/presentation/widgets/base_page.dart';
-import 'package:warshasy/core/storage/repository/local_storage_reposotory.dart';
-import 'package:warshasy/core/utils/injection_container.dart';
+import 'package:warshasy/core/theme/app_borders.dart';
+import 'package:warshasy/core/theme/app_colors.dart';
+import 'package:warshasy/core/theme/app_shadows.dart';
 import 'package:warshasy/core/utils/snackbar_utils.dart';
-import 'package:warshasy/features/auth/auth.dart';
+import 'package:warshasy/features/home/presentation/widgets/common_widgets.dart';
+import 'package:warshasy/features/home/presentation/widgets/location_selector.dart';
 import 'package:warshasy/features/static_data/domain/entites/location.dart';
-import 'package:warshasy/features/user/domain/presentation/blocs/current_user_bloc/current_user_bloc.dart';
-import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc/user_bloc.dart';
+import 'package:warshasy/features/static_data/domain/presentation/bloc/static_data_bloc.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
+import 'package:warshasy/features/user/domain/presentation/blocs/current_user_bloc/current_user_bloc.dart';
 
 class ProfileSetupPage extends StatefulWidget {
   const ProfileSetupPage({super.key});
@@ -26,48 +26,15 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _bioController = TextEditingController();
-  late Location _selectedLocation;
+
+  Location? _selectedLocation;
   User? _currentUser;
+  bool get _isFormValid => _selectedLocation != null;
+
   @override
   void initState() {
     super.initState();
-    // Load current user data from the existing UserBloc state
     _loadCurrentUser();
-  }
-
-  void _loadCurrentUser() {
-    // Use CurrentUserBloc instead of UserBloc
-    final userState = context.read<CurrentUserBloc>().state;
-    if (userState is CurrentUserLoaded) {
-      _setUser(userState.user);
-    }
-  }
-
-  void _saveProfile() {
-    if (_formKey.currentState!.validate() && _currentUser != null) {
-      final updatedUser = User(
-        id: _currentUser!.id,
-        phone: _currentUser!.phone,
-        fullName: _nameController.text.trim(),
-        location: _selectedLocation,
-        bio:
-            _bioController.text.trim().isEmpty
-                ? null
-                : _bioController.text.trim(),
-        updatedAt: DateTime.now(),
-      );
-      // Use CurrentUserBloc instead of UserBloc
-      context.read<CurrentUserBloc>().add(UpdateCurrentUser(user: updatedUser));
-    }
-  }
-
-  void _setUser(User user) {
-    setState(() {
-      _currentUser = user;
-      _nameController.text = user.fullName;
-      _bioController.text = user.bio ?? '';
-      _selectedLocation = user.location;
-    });
   }
 
   @override
@@ -77,51 +44,68 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     super.dispose();
   }
 
+  void _loadCurrentUser() {
+    final userState = context.read<CurrentUserBloc>().state;
+    if (userState is CurrentUserLoaded) {
+      _initializeUserData(userState.user);
+    }
+  }
+
+  void _initializeUserData(User user) {
+    setState(() {
+      _currentUser = user;
+      _nameController.text = user.fullName;
+      _bioController.text = user.bio ?? '';
+      _selectedLocation = user.location;
+    });
+  }
+
+  void _saveProfile() {
+    if (!_formKey.currentState!.validate() ||
+        _currentUser == null ||
+        !_isFormValid) {
+      return;
+    }
+
+    final updatedUser = _currentUser!.copyWith(
+      fullName: _nameController.text.trim(),
+      location: _selectedLocation!,
+      bio:
+          _bioController.text.trim().isEmpty
+              ? null
+              : _bioController.text.trim(),
+      updatedAt: DateTime.now(),
+    );
+
+    context.read<CurrentUserBloc>().add(UpdateCurrentUser(user: updatedUser));
+  }
+
+  void _updateLocation({int? cityId, int? regionId}) {
+    setState(() {
+      if (cityId != null) {
+        _selectedLocation = Location(cityId: cityId);
+      } else if (regionId != null && _selectedLocation != null) {
+        _selectedLocation = Location(
+          cityId: _selectedLocation!.cityId,
+          regionId: regionId,
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return BasePage(
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('تعديل الملف الشخصي'),
-          actions: [
-            // Use CurrentUserBloc instead of UserBloc
-            BlocBuilder<CurrentUserBloc, CurrentUserState>(
-              builder: (context, state) {
-                final isUpdating = state is CurrentUserUpdating;
-                return TextButton(
-                  onPressed: isUpdating ? null : _saveProfile,
-                  child:
-                      isUpdating
-                          ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                          : const Text('حفظ', style: TextStyle(fontSize: 16)),
-                );
-              },
-            ),
-          ],
+        backgroundColor: AppColors.background,
+        appBar: CommonWidgets.buildDefaultAppBar(
+          context,
+          title: 'تعديل الملف الشخصي',
         ),
-        // Use CurrentUserBloc instead of UserBloc
         body: BlocConsumer<CurrentUserBloc, CurrentUserState>(
-          listener: (context, state) {
-            if (state is CurrentUserLoaded && _currentUser == null) {
-              _setUser(state.user);
-            } else if (state is CurrentUserUpdated) {
-              context.showSuccessSnackBar('تم تحديث البيانات بنجاح');
-              Future.delayed(const Duration(milliseconds: 500), () {
-                if (mounted) context.pop();
-              });
-            } else if (state is CurrentUserError) {
-              context.showErrorSnackBar(state.failure.message);
-            }
-          },
+          listener: _handleUserStateChanges,
           builder: (context, state) {
             if (_currentUser == null && state is CurrentUserLoading) {
               return const Center(child: CircularProgressIndicator());
@@ -135,131 +119,10 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                 padding: const EdgeInsets.all(16),
                 children: [
                   _buildAvatarSection(context, isUpdating),
-                  const SizedBox(height: 32),
-
-                  // Name Field
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'الاسم الكامل *',
-                      hintText: 'أدخل اسمك الكامل',
-                      prefixIcon: Icon(Icons.person),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'الرجاء إدخال الاسم';
-                      }
-                      if (value.trim().length < 3) {
-                        return 'الاسم يجب أن يكون 3 أحرف على الأقل';
-                      }
-                      return null;
-                    },
-                    enabled: !isUpdating,
-                    textInputAction: TextInputAction.next,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // City Dropdown
-                  /* DropdownButtonFormField<Location>(
-                    value: _selectedLocation,
-                    decoration: const InputDecoration(
-                      labelText: 'المدينة',
-                      hintText: 'اختر مدينتك',
-                      prefixIcon: Icon(Icons.location_city),
-                      border: OutlineInputBorder(),
-                    ),
-                    items:
-                        City.values.map((city) {
-                          return DropdownMenuItem(
-                            value: city,
-                            child: Text(city.arabicName),
-                          );
-                        }).toList(),
-                    onChanged:
-                        isUpdating
-                            ? null
-                            : (city) {
-                              if (city != null)
-                                setState(() => _selectedLocation.city = city);
-                            },
-                  ),
-                  const SizedBox(height: 16),
-                  // Region Dropdown
-                  DropdownButtonFormField<String>(
-                    value: _selectedLocation?.regionName,
-                    decoration: const InputDecoration(
-                      labelText: 'المنطقة',
-                      hintText: 'اختر المنطقة',
-                      prefixIcon: Icon(Icons.location_city),
-                      border: OutlineInputBorder(),
-                    ),
-                    items:
-                    
-                        _selectedLocation.cityId.regions.map((region) {
-                          return DropdownMenuItem(
-                            value: region,
-                            child: Text(region),
-                          );
-                        }).toList(),
-                    onChanged:
-                        isUpdating
-                            ? null
-                            : (location) {
-                              if (location != null)
-                                setState(
-                                  () => _selectedLocation.location = location,
-                                );
-                            },
-                  ),*/
-                  const SizedBox(height: 16),
-                  // Bio Field
-                  TextFormField(
-                    controller: _bioController,
-                    decoration: const InputDecoration(
-                      labelText: 'نبذة عنك (اختياري)',
-                      hintText: 'أخبر الآخرين عن نفسك...',
-                      prefixIcon: Icon(Icons.info_outline),
-                      border: OutlineInputBorder(),
-                      alignLabelWithHint: true,
-                    ),
-                    maxLines: 4,
-                    maxLength: 500,
-                    enabled: !isUpdating,
-                    textInputAction: TextInputAction.done,
-                  ),
                   const SizedBox(height: 24),
-
-                  // Save Button
-                  ElevatedButton(
-                    onPressed: isUpdating ? null : _saveProfile,
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
-                    child:
-                        isUpdating
-                            ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                            : const Text('حفظ التغييرات'),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Cancel Button
-                  OutlinedButton(
-                    onPressed: isUpdating ? null : () => context.pop(),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
-                    child: const Text('إلغاء'),
-                  ),
+                  _buildFormCard(context, isUpdating),
+                  const SizedBox(height: 24),
+                  _buildActionButtons(context, isUpdating),
                 ],
               ),
             );
@@ -269,46 +132,103 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     );
   }
 
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return AppBar(
+      backgroundColor: AppColors.background,
+      elevation: 0,
+      title: Text(
+        'تعديل الملف الشخصي',
+
+        style: textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: AppColors.textPrimary,
+        ),
+      ),
+      actions: [
+        BlocBuilder<CurrentUserBloc, CurrentUserState>(
+          builder: (context, state) {
+            final isUpdating = state is CurrentUserUpdating;
+            return Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: TextButton(
+                onPressed: isUpdating || !_isFormValid ? null : _saveProfile,
+                child:
+                    isUpdating
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.primary,
+                            ),
+                          ),
+                        )
+                        : Text(
+                          'حفظ',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color:
+                                _isFormValid
+                                    ? AppColors.primary
+                                    : AppColors.textTertiary,
+                          ),
+                        ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildAvatarSection(BuildContext context, bool isDisabled) {
     return Center(
       child: Stack(
         children: [
-          BlocBuilder<UserBloc, UserState>(
+          BlocBuilder<CurrentUserBloc, CurrentUserState>(
             builder: (context, state) {
-              String? avatarUrl;
+              final avatarUrl = _getAvatarUrl(state);
 
-              if (state is UserLoaded) {
-                avatarUrl = state.user.avatarUrl;
-              } else if (state is UserUpdating) {
-                avatarUrl = state.user.avatarUrl;
-              }
-
-              return CircleAvatar(
-                radius: 60,
-                backgroundColor: Colors.grey.shade200,
-                backgroundImage:
-                    avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                child:
-                    avatarUrl == null
-                        ? Icon(
-                          Icons.person,
-                          size: 60,
-                          color: Colors.grey.shade400,
-                        )
-                        : null,
+              return Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: AppShadows.soft,
+                ),
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundColor: AppColors.surface,
+                  backgroundImage:
+                      avatarUrl != null ? NetworkImage(avatarUrl) : null,
+                  child:
+                      avatarUrl == null
+                          ? Icon(
+                            Icons.person,
+                            size: 60,
+                            color: AppColors.textTertiary,
+                          )
+                          : null,
+                ),
               );
             },
           ),
           Positioned(
             bottom: 0,
             right: 0,
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor: Theme.of(context).primaryColor,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.primary,
+                boxShadow: AppShadows.subtle,
+              ),
               child: IconButton(
-                icon: const Icon(Icons.camera_alt, size: 20),
+                icon: const Icon(Icons.camera_alt, size: 18),
                 color: Colors.white,
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.all(8),
+                constraints: const BoxConstraints(),
                 onPressed: isDisabled ? null : _showAvatarOptions,
               ),
             ),
@@ -318,54 +238,347 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     );
   }
 
+  String? _getAvatarUrl(CurrentUserState state) {
+    if (state is CurrentUserLoaded) {
+      return state.user.avatarUrl;
+    } else if (state is CurrentUserUpdating) {
+      return _currentUser?.avatarUrl;
+    }
+    return null;
+  }
+
+  Widget _buildFormCard(BuildContext context, bool isUpdating) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.cardTheme.color,
+        borderRadius: BorderRadius.circular(AppRadius.large),
+        boxShadow: AppShadows.soft,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Name Field Section
+          _buildSectionTitle(textTheme, 'الاسم الكامل', isRequired: true),
+          const SizedBox(height: 8),
+          _buildNameField(textTheme, isUpdating),
+
+          const SizedBox(height: 20),
+
+          // Location Section
+          _buildSectionTitle(textTheme, 'الموقع', isRequired: true),
+          const SizedBox(height: 12),
+          _buildLocationSection(isUpdating),
+
+          const SizedBox(height: 20),
+
+          // Bio Section
+          _buildSectionTitle(textTheme, 'نبذة عنك', isRequired: false),
+          const SizedBox(height: 8),
+          _buildBioField(textTheme, isUpdating),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(
+    TextTheme textTheme,
+    String title, {
+    required bool isRequired,
+  }) {
+    return Text(
+      '$title${isRequired ? ' *' : ' (اختياري)'}',
+      style: textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.bold,
+        color: AppColors.textPrimary,
+      ),
+    );
+  }
+
+  Widget _buildNameField(TextTheme textTheme, bool isUpdating) {
+    return TextFormField(
+      controller: _nameController,
+      decoration: InputDecoration(
+        hintText: 'أدخل اسمك الكامل',
+        hintStyle: TextStyle(color: AppColors.textTertiary),
+        prefixIcon: Icon(Icons.person, color: AppColors.textTertiary),
+        filled: true,
+        fillColor: AppColors.background,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: BorderSide(color: AppColors.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: BorderSide(color: AppColors.error, width: 2),
+        ),
+      ),
+      style: textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary),
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'الرجاء إدخال الاسم';
+        }
+        if (value.trim().length < 3) {
+          return 'الاسم يجب أن يكون 3 أحرف على الأقل';
+        }
+        return null;
+      },
+      enabled: !isUpdating,
+      textInputAction: TextInputAction.next,
+    );
+  }
+
+  Widget _buildLocationSection(bool isUpdating) {
+    if (_selectedLocation == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      children: [
+        // City Selector
+        LocationSelector(
+          type: LocationType.city,
+          selectedId: _selectedLocation!.cityId,
+          onSelected: (cityId) => _updateLocation(cityId: cityId),
+        ),
+        const SizedBox(height: 12),
+
+        // Region Selector
+        if (_selectedLocation!.cityId > 0)
+          LocationSelector(
+            type: LocationType.region,
+            selectedId: _selectedLocation!.regionId ?? -1,
+            parentCityId: _selectedLocation!.cityId,
+            onSelected: (regionId) => _updateLocation(regionId: regionId),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildBioField(TextTheme textTheme, bool isUpdating) {
+    return TextFormField(
+      controller: _bioController,
+      decoration: InputDecoration(
+        hintText: 'أخبر الآخرين عن نفسك...',
+        hintStyle: TextStyle(color: AppColors.textTertiary),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.only(bottom: 60),
+          child: Icon(Icons.info_outline, color: AppColors.textTertiary),
+        ),
+        filled: true,
+        fillColor: AppColors.background,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
+        alignLabelWithHint: true,
+      ),
+      style: textTheme.bodyMedium?.copyWith(
+        color: AppColors.textPrimary,
+        height: 1.5,
+      ),
+      maxLines: 4,
+      maxLength: 500,
+      enabled: !isUpdating,
+      textInputAction: TextInputAction.done,
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context, bool isUpdating) {
+    return Column(
+      children: [
+        // Save Button
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: isUpdating || !_isFormValid ? null : _saveProfile,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: AppColors.textTertiary.withOpacity(0.3),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.medium),
+              ),
+            ),
+            child:
+                isUpdating
+                    ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                    : Text(
+                      'حفظ التغييرات',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Cancel Button
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: OutlinedButton(
+            onPressed: isUpdating ? null : () => context.pop(),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.textPrimary,
+              side: BorderSide(color: AppColors.primary),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.medium),
+              ),
+            ),
+            child: Text(
+              'إلغاء',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _handleUserStateChanges(BuildContext context, CurrentUserState state) {
+    if (state is CurrentUserLoaded && _currentUser == null) {
+      _initializeUserData(state.user);
+    } else if (state is CurrentUserUpdated) {
+      context.showSuccessSnackBar('تم تحديث البيانات بنجاح');
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) context.pop();
+      });
+    } else if (state is CurrentUserError) {
+      context.showErrorSnackBar(state.failure.message);
+    }
+  }
+
   void _showAvatarOptions() {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Theme.of(context).cardTheme.color,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.large),
+        ),
+      ),
       builder:
           (context) => SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.camera_alt),
-                  title: const Text('التقاط صورة'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImageFromCamera();
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text('اختيار من المعرض'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickImageFromGallery();
-                  },
-                ),
-                if (_currentUser?.avatarUrl != null)
-                  ListTile(
-                    leading: const Icon(Icons.delete, color: Colors.red),
-                    title: const Text(
-                      'حذف الصورة',
-                      style: TextStyle(color: Colors.red),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle indicator
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.textTertiary,
+                      borderRadius: BorderRadius.circular(2),
                     ),
+                  ),
+
+                  _buildAvatarOption(
+                    icon: Icons.camera_alt,
+                    title: 'التقاط صورة',
+                    color: AppColors.primary,
                     onTap: () {
                       Navigator.pop(context);
-                      _deleteAvatar();
+                      _pickImage(ImageSource.camera);
                     },
                   ),
-              ],
+                  _buildAvatarOption(
+                    icon: Icons.photo_library,
+                    title: 'اختيار من المعرض',
+                    color: AppColors.info,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.gallery);
+                    },
+                  ),
+                  if (_currentUser?.avatarUrl != null)
+                    _buildAvatarOption(
+                      icon: Icons.delete,
+                      title: 'حذف الصورة',
+                      color: AppColors.error,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _deleteAvatar();
+                      },
+                    ),
+                ],
+              ),
             ),
           ),
     );
   }
 
-  Future<void> _pickImageFromCamera() async {
-    _pickImage(ImageSource.camera);
-  }
-
-  Future<void> _pickImageFromGallery() async {
-    _pickImage(ImageSource.gallery);
+  Widget _buildAvatarOption({
+    required IconData icon,
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(AppRadius.small),
+        ),
+        child: Icon(icon, color: color),
+      ),
+      title: Text(
+        title,
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: color == AppColors.error ? color : AppColors.textPrimary,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      onTap: onTap,
+    );
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -381,25 +594,48 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       );
 
       if (pickedImage != null && mounted) {
-        context.read<UserBloc>().add(
-          UploadAvatarRequested(
-            userId: _currentUser!.id,
+        context.read<CurrentUserBloc>().add(
+          UploadCurrentUserAvatar(
+            // : _currentUser!.id,
             filePath: pickedImage.path,
           ),
         );
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
-        context.showErrorSnackBar('Failed to open camera');
+        context.showErrorSnackBar('فشل في فتح الكاميرا');
       }
     }
   }
 
   void _deleteAvatar() {
     if (_currentUser != null) {
-      context.read<UserBloc>().add(
-        DeleteAvatarRequested(userId: _currentUser!.id),
+      context.read<CurrentUserBloc>().add(
+        DeleteCurrentUserAvatar(userId: _currentUser!.id),
       );
     }
+  }
+}
+
+// Extension for User copyWith if not already present
+extension UserCopyWith on User {
+  User copyWith({
+    String? id,
+    String? phone,
+    String? fullName,
+    Location? location,
+    String? bio,
+    String? avatarUrl,
+    DateTime? updatedAt,
+  }) {
+    return User(
+      id: id ?? this.id,
+      phone: phone ?? this.phone,
+      fullName: fullName ?? this.fullName,
+      location: location ?? this.location,
+      bio: bio ?? this.bio,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
   }
 }
