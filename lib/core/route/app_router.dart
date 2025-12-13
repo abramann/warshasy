@@ -136,9 +136,10 @@ class AppRouter {
         builder: (context, state) {
           final id = state.pathParameters['serviceId']!;
           // This one can be public or protected
+          final l = AppLocalizations.of(context);
           return Scaffold(
-            appBar: AppBar(title: const Text('Service details')),
-            body: Center(child: Text('Service ID: $id')),
+            appBar: AppBar(title: Text(l.serviceDetailsTitle)),
+            body: Center(child: Text(l.serviceIdLabel(id))),
           );
         },
       ),
@@ -149,7 +150,8 @@ class AppRouter {
         name: AppRouteName.chats,
         builder: (context, state) {
           // TODO: replace with chat list widget
-          return const Scaffold(body: Center(child: Text('Chats list')));
+          final l = AppLocalizations.of(context);
+          return Scaffold(body: Center(child: Text(l.chatsListTitle)));
         },
       ),
       GoRoute(
@@ -157,16 +159,20 @@ class AppRouter {
         name: AppRouteName.chatDetail,
         builder: (context, state) {
           final chatId = state.pathParameters['chatId']!;
+          final l = AppLocalizations.of(context);
           // TODO: replace with chat screen
           return Scaffold(
-            appBar: AppBar(title: const Text('Chat')),
-            body: Center(child: Text('Chat ID: $chatId')),
+            appBar: AppBar(title: Text(l.chatTitle)),
+            body: Center(child: Text('${l.chatTitle} #$chatId')),
           );
         },
       ),
     ],
-    errorBuilder:
-        (context, state) =>
-            Scaffold(body: Center(child: Text('Page not found: ${state.uri}'))),
+    errorBuilder: (context, state) {
+      final l = AppLocalizations.of(context);
+      return Scaffold(
+        body: Center(child: Text('${l.pageNotFoundWithUri} ${state.uri}')),
+      );
+    },
   );
 }

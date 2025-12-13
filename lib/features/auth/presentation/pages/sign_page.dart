@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:warshasy/core/localization/localization.dart';
 import 'package:warshasy/core/route/app_routes.dart';
 import 'package:warshasy/core/utils/phone_number.dart';
 import 'package:warshasy/core/utils/snackbar_utils.dart';
@@ -36,12 +37,12 @@ class _SignPageState extends State<SignPage> {
     }
   }
 
-  String? _validatePhoneNumber(String? value) {
+  String? _validatePhoneNumber(String? value, AppLocalizations l) {
     if (value?.isEmpty ?? true) {
-      return 'الرجاء إدخال رقم الهاتف';
+      return l.phoneRequiredError;
     }
     if (!PhoneNumber.isValidPhoneNumber(value!)) {
-      return 'الرجاء إدخال رقم هاتف صالح';
+      return l.phoneInvalidError;
     }
 
     return null;
@@ -49,13 +50,14 @@ class _SignPageState extends State<SignPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         body: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is Authenticated) {
-              context.showSuccessSnackBar('تم التسجيل بنجاح');
+              context.showSuccessSnackBar(l.loginSuccess);
             }
             if (state is AuthFailureState) {
               setState(() => _isButtonPressed = false);
@@ -69,8 +71,6 @@ class _SignPageState extends State<SignPage> {
             }
           },
           builder: (context, state) {
-            //if (state is AuthStarting) return LoadingPage();
-
             final isLoading = state is AuthLoading;
 
             return SafeArea(
@@ -83,15 +83,12 @@ class _SignPageState extends State<SignPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Logo with animation
                         Hero(
                           tag: 'app_logo',
                           child: Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).primaryColor.withOpacity(0.1),
+                              color: Theme.of(context).primaryColor.withOpacity(0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -102,36 +99,26 @@ class _SignPageState extends State<SignPage> {
                           ),
                         ),
                         const SizedBox(height: 32),
-
-                        // Welcome Title
                         Text(
-                          'أهلاً بك!',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 32,
-                            letterSpacing: 0.5,
-                          ),
+                          l.signInTitle,
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 32,
+                                letterSpacing: 0.5,
+                              ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 12),
-
-                        // Subtitle
                         Text(
-                          'أدخل رقم هاتفك للمتابعة',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyLarge?.copyWith(
-                            color: Colors.grey[600],
-                            fontSize: 16,
-                            height: 1.5,
-                          ),
+                          l.signInSubtitle,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                color: Colors.grey[600],
+                                fontSize: 16,
+                                height: 1.5,
+                              ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 48),
-
-                        // Phone Number Field
                         TextFormField(
                           textAlign: TextAlign.center,
                           controller: _phoneController,
@@ -144,8 +131,7 @@ class _SignPageState extends State<SignPage> {
                             ),
                           ],
                           decoration: InputDecoration(
-                            labelText: 'رقم الهاتف',
-
+                            labelText: l.phoneLabel,
                             hintText: '+963 XXX XXX XXX',
                             hintStyle: TextStyle(color: Colors.grey[400]),
                             hintTextDirection: TextDirection.ltr,
@@ -167,16 +153,16 @@ class _SignPageState extends State<SignPage> {
                                 width: 2,
                               ),
                             ),
-                            errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
+                            errorBorder: const OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(12)),
+                              borderSide: BorderSide(
                                 color: Colors.red,
                                 width: 1.5,
                               ),
                             ),
-                            focusedErrorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(
+                            focusedErrorBorder: const OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(12)),
+                              borderSide: BorderSide(
                                 color: Colors.red,
                                 width: 2,
                               ),
@@ -186,11 +172,9 @@ class _SignPageState extends State<SignPage> {
                               vertical: 16,
                             ),
                           ),
-                          validator: _validatePhoneNumber,
+                          validator: (value) => _validatePhoneNumber(value, l),
                         ),
                         const SizedBox(height: 16),
-
-                        // Helper Text
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Row(
@@ -203,7 +187,7 @@ class _SignPageState extends State<SignPage> {
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
-                                  'سنرسل لك رمز التحقق عبر رسالة واتسسأب',
+                                  l.helperNote,
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: Colors.grey[600],
@@ -214,15 +198,11 @@ class _SignPageState extends State<SignPage> {
                           ),
                         ),
                         const SizedBox(height: 32),
-
-                        // Sign In Button
                         SizedBox(
                           height: 56,
                           child: ElevatedButton(
                             onPressed:
-                                (isLoading || _isButtonPressed)
-                                    ? null
-                                    : _signIn,
+                                (isLoading || _isButtonPressed) ? null : _signIn,
                             style: ElevatedButton.styleFrom(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -230,47 +210,42 @@ class _SignPageState extends State<SignPage> {
                               elevation: 2,
                               disabledBackgroundColor: Colors.grey[300],
                             ),
-                            child:
-                                (isLoading || _isButtonPressed)
-                                    ? Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2.5,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                                  Colors.white,
-                                                ),
+                            child: (isLoading || _isButtonPressed)
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                            Colors.white,
                                           ),
                                         ),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          'جاري الإرسال...',
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                    : const Text(
-                                      'إرسال رمز التحقق',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
                                       ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        l.signingIn,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Text(
+                                    l.signInCta,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
                                     ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 24),
-
-                        // Privacy Note
                         Text(
-                          'بالمتابعة، أنت توافق على شروط الخدمة وسياسة الخصوصية',
+                          l.privacyNote,
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[500],

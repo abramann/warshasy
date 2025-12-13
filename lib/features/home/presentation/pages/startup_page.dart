@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -95,7 +95,7 @@ class StartupPageState extends State<StartupPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
                 child: Text(
-                  'منصتك الموثوقة للخدمات المنزلية والحرفية',
+                  l.startupTagline,
                   style: textTheme.bodyLarge?.copyWith(
                     color: Colors.white.withOpacity(0.9),
                     fontSize: 16,
@@ -158,29 +158,16 @@ class StartupPageState extends State<StartupPage> {
         // StaticData listener
         BlocListener<StaticDataBloc, StaticDataState>(
           listener: (context, staticDataState) {
+            final l = AppLocalizations.of(context);
             if (staticDataState is StaticDataLoaded) {
               // Navigate to home page after static data is loaded
               context.goNamed(AppRouteName.home);
             } else if (staticDataState is StaticDataError) {
               SnackBarUtils.showError(
                 context,
-                'فشل في تحميل البيانات: ${staticDataState.failure.message}',
+                '${l.loadingDataError}: ${staticDataState.failure.message}',
                 action: SnackBarAction(
-                  label: 'إعادة المحاولة',
-                  onPressed: () {
-                    context.read<StaticDataBloc>().add(
-                      LoadStaticData(forceRefresh: true),
-                    );
-                  },
-                ),
-              );
-            }
-            if (staticDataState is StaticDataError) {
-              SnackBarUtils.showError(
-                context,
-                'فشل في تحميل البيانات: ${staticDataState.failure.message}',
-                action: SnackBarAction(
-                  label: 'إعادة المحاولة',
+                  label: l.tryAgain,
                   onPressed: () {
                     context.read<StaticDataBloc>().add(
                       LoadStaticData(forceRefresh: true),

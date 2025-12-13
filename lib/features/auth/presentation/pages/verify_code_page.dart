@@ -1,9 +1,10 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:warshasy/core/localization/localization.dart';
 import 'package:warshasy/core/presentation/pages/loading_page.dart';
 import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
@@ -16,13 +17,11 @@ class VerifyCodePage extends StatefulWidget {
 }
 
 class _VerifyCodePageState extends State<VerifyCodePage> {
-  final List<TextEditingController> _otpControllers = List.generate(
-    4,
-    (index) => TextEditingController(),
-  );
+  final List<TextEditingController> _otpControllers =
+      List.generate(4, (index) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(4, (index) => FocusNode());
 
-  Timer? _resendTimer; // <— keep reference to the timer
+  Timer? _resendTimer;
 
   bool _isResendEnabled = false;
   int _resendCountdown = 60;
@@ -35,7 +34,6 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
   void initState() {
     super.initState();
     _startResendTimer();
-    // Auto-focus first field
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNodes[0].requestFocus();
     });
@@ -49,11 +47,12 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
     for (var node in _focusNodes) {
       node.dispose();
     }
+    _resendTimer?.cancel();
     super.dispose();
   }
 
   void _startResendTimer() {
-    _resendTimer?.cancel(); // cancel any existing timer
+    _resendTimer?.cancel();
 
     setState(() {
       _isResendEnabled = false;
@@ -77,11 +76,9 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
 
   void _onOtpChanged(String value, int index) {
     if (value.isNotEmpty) {
-      // Move to next field
       if (index < 3) {
         _focusNodes[index + 1].requestFocus();
       } else {
-        // Last field, unfocus and verify
         _focusNodes[index].unfocus();
         _verifyOtp();
       }
@@ -89,13 +86,11 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
   }
 
   void _onOtpKeyEvent(RawKeyEvent event, int index) {
-    if (event is RawKeyDownEvent) {
-      if (event.logicalKey == LogicalKeyboardKey.backspace) {
-        if (_otpControllers[index].text.isEmpty && index > 0) {
-          // Move to previous field on backspace if current is empty
-          _focusNodes[index - 1].requestFocus();
-        }
-      }
+    if (event is RawKeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.backspace &&
+        _otpControllers[index].text.isEmpty &&
+        index > 0) {
+      _focusNodes[index - 1].requestFocus();
     }
   }
 
@@ -105,22 +100,24 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
 
   void _verifyOtp() {
     final code = _getOtpCode();
+    final l = AppLocalizations.of(context);
     if (code.length == 4) {
       context.read<AuthBloc>().add(
-        SignInRequested(sessionId: _otpSessionId, code: code),
-      );
+            SignInRequested(sessionId: _otpSessionId, code: code),
+          );
     } else {
-      context.showErrorSnackBar('الرجاء إدخال رمز التحقق كاملاً');
+      context.showErrorSnackBar(l.otpInvalid);
     }
   }
 
   void _resendCode() {
+    final l = AppLocalizations.of(context);
     if (_isResendEnabled) {
       context.read<AuthBloc>().add(
-        SendVerificationCodeRequested(phone: _phone),
-      );
+            SendVerificationCodeRequested(phone: _phone),
+          );
       _startResendTimer();
-      context.showSuccessSnackBar('تم إعادة إرسال الرمز');
+      context.showSuccessSnackBar(l.verificationCodeSent);
     }
   }
 
@@ -133,6 +130,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -141,7 +139,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
             icon: const Icon(Icons.arrow_back),
             onPressed: () => context.pop(),
           ),
-          title: const Text('التحقق من الرمز'),
+          title: Text(l.verifyPhoneTitle),
         ),
         body: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
@@ -149,13 +147,11 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
               _clearOtp();
               context.showErrorSnackBar(state.message);
             } else if (state is Authenticated) {
-              _resendTimer?.cancel(); // stop timer
+              _resendTimer?.cancel();
               context.go('/home');
-              // Navigate to home or main screen
-              // context.go('/home');
             } else if (state is VerificationCodeSent) {
               _clearOtp();
-              context.showSuccessSnackBar('تم إرسال الرمز بنجاح');
+              context.showSuccessSnackBar(l.verificationCodeSent);
             }
           },
           builder: (context, state) {
@@ -170,8 +166,6 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 20),
-
-                    // WhatsApp Icon
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -185,34 +179,32 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                       ),
                     ),
                     const SizedBox(height: 32),
-
-                    // Title
                     Text(
-                      'تحقق من رسالة واتساب',
-                      style: Theme.of(context).textTheme.headlineMedium
+                      l.otpHeader,
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineMedium
                           ?.copyWith(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
-
-                    // Description
                     RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.grey[600],
-                          height: 1.5,
-                        ),
+                              color: Colors.grey[600],
+                              height: 1.5,
+                            ),
                         children: [
-                          const TextSpan(text: 'أرسلنا لك رمز التحقق عبر '),
+                          TextSpan(text: '  '),
                           TextSpan(
-                            text: 'واتساب',
+                            text: l.otpDescriptionTo,
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: const Color(0xFF25D366),
                             ),
                           ),
-                          const TextSpan(text: ' على الرقم\n'),
+                          const TextSpan(text: ' '),
                           TextSpan(
                             text: _phone,
                             style: TextStyle(
@@ -224,8 +216,6 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                       ),
                     ),
                     const SizedBox(height: 48),
-
-                    // OTP Input Fields
                     Directionality(
                       textDirection: TextDirection.ltr,
                       child: Row(
@@ -246,7 +236,9 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                                 textAlign: TextAlign.center,
                                 keyboardType: TextInputType.number,
                                 maxLength: 1,
-                                style: Theme.of(context).textTheme.headlineSmall
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
                                     ?.copyWith(fontWeight: FontWeight.bold),
                                 inputFormatters: [
                                   FilteringTextInputFormatter.digitsOnly,
@@ -280,8 +272,7 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                                     ),
                                   ),
                                 ),
-                                onChanged:
-                                    (value) => _onOtpChanged(value, index),
+                                onChanged: (value) => _onOtpChanged(value, index),
                               ),
                             ),
                           ),
@@ -289,26 +280,22 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Clear button
                     TextButton.icon(
                       onPressed: _clearOtp,
                       icon: const Icon(Icons.refresh, size: 18),
-                      label: const Text('مسح الرمز'),
+                      label: Text(l.clearCode),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.grey[600],
                       ),
                     ),
                     const SizedBox(height: 32),
-
-                    // Verify Button
                     SizedBox(
                       height: 56,
                       child: ElevatedButton(
                         onPressed: isLoading ? null : _verifyOtp,
-                        child: const Text(
-                          'تحقق من الرمز',
-                          style: TextStyle(
+                        child: Text(
+                          l.verifyCodeCta,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -316,15 +303,13 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                       ),
                     ),
                     const SizedBox(height: 32),
-
-                    // Divider
                     Row(
                       children: [
                         Expanded(child: Divider(color: Colors.grey[300])),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
-                            'لم تستلم الرمز؟',
+                            l.whatsappLabel,
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 14,
@@ -335,33 +320,27 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                       ],
                     ),
                     const SizedBox(height: 24),
-
-                    // Resend Code Button
                     OutlinedButton.icon(
                       onPressed: _isResendEnabled ? _resendCode : null,
                       icon: const Icon(Icons.refresh),
                       label: Text(
                         _isResendEnabled
-                            ? 'إعادة إرسال الرمز'
-                            : 'إعادة الإرسال بعد $_resendCountdown ثانية',
+                            ? l.resendCode
+                            : l.resendCountdown(_resendCountdown),
                       ),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         side: BorderSide(
-                          color:
-                              _isResendEnabled
-                                  ? Theme.of(context).primaryColor
-                                  : Colors.grey[300]!,
+                          color: _isResendEnabled
+                              ? Theme.of(context).primaryColor
+                              : Colors.grey[300]!,
                         ),
-                        foregroundColor:
-                            _isResendEnabled
-                                ? Theme.of(context).primaryColor
-                                : Colors.grey[400],
+                        foregroundColor: _isResendEnabled
+                            ? Theme.of(context).primaryColor
+                            : Colors.grey[400],
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // WhatsApp Help
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -373,15 +352,15 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                       ),
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.info_outline,
-                            color: const Color(0xFF25D366),
+                            color: Color(0xFF25D366),
                             size: 20,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'تأكد من فتح تطبيق واتساب للحصول على رمز التحقق',
+                              l.whatsappHelp,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey[700],
@@ -393,12 +372,10 @@ class _VerifyCodePageState extends State<VerifyCodePage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Change Number
                     TextButton.icon(
                       onPressed: () => context.pop(),
                       icon: const Icon(Icons.edit_outlined, size: 18),
-                      label: const Text('تغيير رقم الهاتف'),
+                      label: Text(l.changePhone),
                       style: TextButton.styleFrom(
                         foregroundColor: Theme.of(context).primaryColor,
                       ),

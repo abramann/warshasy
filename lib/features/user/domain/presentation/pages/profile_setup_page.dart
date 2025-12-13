@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -70,10 +70,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     final updatedUser = _currentUser!.copyWith(
       fullName: _nameController.text.trim(),
       location: _selectedLocation!,
-      bio:
-          _bioController.text.trim().isEmpty
-              ? null
-              : _bioController.text.trim(),
+      bio: _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
       updatedAt: DateTime.now(),
     );
 
@@ -95,14 +92,14 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
 
     return BasePage(
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: CommonWidgets.buildDefaultAppBar(
           context,
-          title: 'تعديل الملف الشخصي',
+          title: l.profileSetupTitle,
         ),
         body: BlocConsumer<CurrentUserBloc, CurrentUserState>(
           listener: _handleUserStateChanges,
@@ -132,59 +129,6 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return AppBar(
-      backgroundColor: AppColors.background,
-      elevation: 0,
-      title: Text(
-        'تعديل الملف الشخصي',
-
-        style: textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: AppColors.textPrimary,
-        ),
-      ),
-      actions: [
-        BlocBuilder<CurrentUserBloc, CurrentUserState>(
-          builder: (context, state) {
-            final isUpdating = state is CurrentUserUpdating;
-            return Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: TextButton(
-                onPressed: isUpdating || !_isFormValid ? null : _saveProfile,
-                child:
-                    isUpdating
-                        ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.primary,
-                            ),
-                          ),
-                        )
-                        : Text(
-                          'حفظ',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color:
-                                _isFormValid
-                                    ? AppColors.primary
-                                    : AppColors.textTertiary,
-                          ),
-                        ),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
   Widget _buildAvatarSection(BuildContext context, bool isDisabled) {
     return Center(
       child: Stack(
@@ -203,14 +147,13 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   backgroundColor: AppColors.surface,
                   backgroundImage:
                       avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                  child:
-                      avatarUrl == null
-                          ? Icon(
-                            Icons.person,
-                            size: 60,
-                            color: AppColors.textTertiary,
-                          )
-                          : null,
+                  child: avatarUrl == null
+                      ? Icon(
+                          Icons.person,
+                          size: 60,
+                          color: AppColors.textTertiary,
+                        )
+                      : null,
                 ),
               );
             },
@@ -250,6 +193,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   Widget _buildFormCard(BuildContext context, bool isUpdating) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
+    final l = AppLocalizations.of(context);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -261,24 +205,17 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Name Field Section
-          _buildSectionTitle(textTheme, 'الاسم الكامل', isRequired: true),
+          _buildSectionTitle(textTheme, l.fullNameLabel, isRequired: true, l: l),
           const SizedBox(height: 8),
-          _buildNameField(textTheme, isUpdating),
-
+          _buildNameField(textTheme, isUpdating, l),
           const SizedBox(height: 20),
-
-          // Location Section
-          _buildSectionTitle(textTheme, 'الموقع', isRequired: true),
+          _buildSectionTitle(textTheme, l.locationLabel, isRequired: true, l: l),
           const SizedBox(height: 12),
           _buildLocationSection(isUpdating),
-
           const SizedBox(height: 20),
-
-          // Bio Section
-          _buildSectionTitle(textTheme, 'نبذة عنك', isRequired: false),
+          _buildSectionTitle(textTheme, l.bioLabel, isRequired: false, l: l),
           const SizedBox(height: 8),
-          _buildBioField(textTheme, isUpdating),
+          _buildBioField(textTheme, isUpdating, l),
         ],
       ),
     );
@@ -288,9 +225,11 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     TextTheme textTheme,
     String title, {
     required bool isRequired,
+    required AppLocalizations l,
   }) {
+    final suffix = isRequired ? ' *' : ' ';
     return Text(
-      '$title${isRequired ? ' *' : ' (اختياري)'}',
+      '',
       style: textTheme.titleMedium?.copyWith(
         fontWeight: FontWeight.bold,
         color: AppColors.textPrimary,
@@ -298,11 +237,15 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     );
   }
 
-  Widget _buildNameField(TextTheme textTheme, bool isUpdating) {
+  Widget _buildNameField(
+    TextTheme textTheme,
+    bool isUpdating,
+    AppLocalizations l,
+  ) {
     return TextFormField(
       controller: _nameController,
       decoration: InputDecoration(
-        hintText: 'أدخل اسمك الكامل',
+        hintText: l.fullNameHint,
         hintStyle: TextStyle(color: AppColors.textTertiary),
         prefixIcon: Icon(Icons.person, color: AppColors.textTertiary),
         filled: true,
@@ -335,10 +278,10 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       style: textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary),
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
-          return 'الرجاء إدخال الاسم';
+          return l.nameRequiredError;
         }
         if (value.trim().length < 3) {
-          return 'الاسم يجب أن يكون 3 أحرف على الأقل';
+          return l.nameTooShortError;
         }
         return null;
       },
@@ -354,15 +297,12 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
     return Column(
       children: [
-        // City Selector
         LocationSelector(
           type: LocationType.city,
           selectedId: _selectedLocation!.cityId,
           onSelected: (cityId) => _updateLocation(cityId: cityId),
         ),
         const SizedBox(height: 12),
-
-        // Region Selector
         if (_selectedLocation!.cityId > 0)
           LocationSelector(
             type: LocationType.region,
@@ -374,11 +314,15 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     );
   }
 
-  Widget _buildBioField(TextTheme textTheme, bool isUpdating) {
+  Widget _buildBioField(
+    TextTheme textTheme,
+    bool isUpdating,
+    AppLocalizations l,
+  ) {
     return TextFormField(
       controller: _bioController,
       decoration: InputDecoration(
-        hintText: 'أخبر الآخرين عن نفسك...',
+        hintText: l.bioHint,
         hintStyle: TextStyle(color: AppColors.textTertiary),
         prefixIcon: Padding(
           padding: const EdgeInsets.only(bottom: 60),
@@ -416,9 +360,9 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   }
 
   Widget _buildActionButtons(BuildContext context, bool isUpdating) {
+    final l = AppLocalizations.of(context);
     return Column(
       children: [
-        // Save Button
         SizedBox(
           width: double.infinity,
           height: 50,
@@ -433,28 +377,25 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                 borderRadius: BorderRadius.circular(AppRadius.medium),
               ),
             ),
-            child:
-                isUpdating
-                    ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                    : Text(
-                      'حفظ التغييرات',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+            child: isUpdating
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
+                  )
+                : Text(
+                    l.saveChanges,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                  ),
           ),
         ),
         const SizedBox(height: 12),
-
-        // Cancel Button
         SizedBox(
           width: double.infinity,
           height: 50,
@@ -468,11 +409,11 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
               ),
             ),
             child: Text(
-              'إلغاء',
+              l.cancel,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
-              ),
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
             ),
           ),
         ),
@@ -481,10 +422,11 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   }
 
   void _handleUserStateChanges(BuildContext context, CurrentUserState state) {
+    final l = AppLocalizations.of(context);
     if (state is CurrentUserLoaded && _currentUser == null) {
       _initializeUserData(state.user);
     } else if (state is CurrentUserUpdated) {
-      context.showSuccessSnackBar('تم تحديث البيانات بنجاح');
+      context.showSuccessSnackBar(l.profileUpdated);
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) context.pop();
       });
@@ -494,6 +436,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   }
 
   void _showAvatarOptions() {
+    final l = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).cardTheme.color,
@@ -502,56 +445,53 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           top: Radius.circular(AppRadius.large),
         ),
       ),
-      builder:
-          (context) => SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Handle indicator
-                  Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.textTertiary,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-
-                  _buildAvatarOption(
-                    icon: Icons.camera_alt,
-                    title: 'التقاط صورة',
-                    color: AppColors.primary,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _pickImage(ImageSource.camera);
-                    },
-                  ),
-                  _buildAvatarOption(
-                    icon: Icons.photo_library,
-                    title: 'اختيار من المعرض',
-                    color: AppColors.info,
-                    onTap: () {
-                      Navigator.pop(context);
-                      _pickImage(ImageSource.gallery);
-                    },
-                  ),
-                  if (_currentUser?.avatarUrl != null)
-                    _buildAvatarOption(
-                      icon: Icons.delete,
-                      title: 'حذف الصورة',
-                      color: AppColors.error,
-                      onTap: () {
-                        Navigator.pop(context);
-                        _deleteAvatar();
-                      },
-                    ),
-                ],
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.textTertiary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
+              _buildAvatarOption(
+                icon: Icons.camera_alt,
+                title: l.takePhoto,
+                color: AppColors.primary,
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              _buildAvatarOption(
+                icon: Icons.photo_library,
+                title: l.chooseFromGallery,
+                color: AppColors.info,
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              if (_currentUser?.avatarUrl != null)
+                _buildAvatarOption(
+                  icon: Icons.delete,
+                  title: l.deletePhoto,
+                  color: AppColors.error,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _deleteAvatar();
+                  },
+                ),
+            ],
           ),
+        ),
+      ),
     );
   }
 
@@ -573,15 +513,16 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       title: Text(
         title,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-          color: color == AppColors.error ? color : AppColors.textPrimary,
-          fontWeight: FontWeight.w500,
-        ),
+              color: color == AppColors.error ? color : AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
       ),
       onTap: onTap,
     );
   }
 
   Future<void> _pickImage(ImageSource source) async {
+    final l = AppLocalizations.of(context);
     if (_currentUser == null) return;
 
     try {
@@ -595,15 +536,14 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
       if (pickedImage != null && mounted) {
         context.read<CurrentUserBloc>().add(
-          UploadCurrentUserAvatar(
-            // : _currentUser!.id,
-            filePath: pickedImage.path,
-          ),
-        );
+              UploadCurrentUserAvatar(
+                filePath: pickedImage.path,
+              ),
+            );
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
-        context.showErrorSnackBar('فشل في فتح الكاميرا');
+        context.showErrorSnackBar(l.avatarUploadError);
       }
     }
   }
@@ -611,8 +551,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   void _deleteAvatar() {
     if (_currentUser != null) {
       context.read<CurrentUserBloc>().add(
-        DeleteCurrentUserAvatar(userId: _currentUser!.id),
-      );
+            DeleteCurrentUserAvatar(userId: _currentUser!.id),
+          );
     }
   }
 }
