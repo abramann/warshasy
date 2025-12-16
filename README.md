@@ -11,8 +11,8 @@
 - **State:** Bloc
 - **Backend:** Supabase  (PostgreSQL, Storage)
 - **Routing:** GoRouter
-- **UI & i18n:** google_fonts, flutter_localization (Arabic/English), image_picker
-- **Utilities:** shared_preferences, connectivity_plus, intl, get_it, url_launcher,
+- **UI:** google_fonts, image_picker
+- **Utilities:** shared_preferences, flutter_localization (Arabic/English), connectivity_plus, intl, get_it, url_launcher,
 
 ## Architecture
 This project follows **Clean Architecture** with the **BLoC** pattern as follow:
