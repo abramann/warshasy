@@ -43,7 +43,6 @@ CREATE TABLE service_categories (
   icon_url TEXT,
   display_order INTEGER DEFAULT 0,
   is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ============================================

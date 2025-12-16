@@ -4,17 +4,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:warshasy/core/localization/localization.dart';
+import 'package:warshasy/core/presentation/widgets/in_devlopment_page.dart';
 import 'package:warshasy/core/utils/auth_guard.dart';
 import 'package:warshasy/core/utils/injection_container.dart';
 import 'package:warshasy/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:warshasy/features/auth/presentation/pages/sign_page.dart';
 import 'package:warshasy/features/auth/presentation/pages/verify_code_page.dart';
 import 'package:warshasy/features/home/presentation/pages/home_page.dart';
+import 'package:warshasy/features/home/presentation/pages/subcategories_page.dart';
 import 'package:warshasy/features/home/presentation/pages/startup_page.dart';
-import 'package:warshasy/features/user/domain/presentation/blocs/current_user_bloc/current_user_bloc.dart';
-import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc/user_bloc.dart';
-import 'package:warshasy/features/user/domain/presentation/pages/profile_page.dart';
-import 'package:warshasy/features/user/domain/presentation/pages/profile_setup_page.dart';
+import 'package:warshasy/features/static_data/domain/entites/service_category.dart';
+import 'package:warshasy/features/user/presentation/blocs/current_user_bloc/current_user_bloc.dart';
+import 'package:warshasy/features/user/presentation/blocs/user_bloc/user_bloc.dart';
+import 'package:warshasy/features/user/presentation/pages/profile_page.dart';
+import 'package:warshasy/features/user/presentation/pages/profile_setup_page.dart';
 
 import 'app_routes.dart';
 
@@ -76,19 +79,18 @@ class AppRouter {
               create:
                   (context) =>
                       sl<UserBloc>()..add(
-                        LoadUserRequested(
-                          userId:
+                        AssignCurrentUserRequested(
+                          user:
                               (context.read<CurrentUserBloc>().state
                                       as CurrentUserLoaded)
-                                  .user
-                                  .id,
+                                  .user,
                         ),
                       ),
               child: ProfilePage(),
             ),
         routes: [
           GoRoute(
-            path: 'profile-setup',
+            path: AppRoutePath.profileSetup,
             name: AppRouteName.profileSetup,
             builder: (context, state) => const ProfileSetupPage(),
           ),
@@ -113,58 +115,54 @@ class AppRouter {
 
       // SERVICES (SIGNED)
       GoRoute(
-        path: AppRoutePath.requestService,
-        name: AppRouteName.requestService,
+        path: AppRoutePath.searchService,
+        name: AppRouteName.searchService,
         builder: (context, state) {
-          final l = AppLocalizations.of(context);
-          // TODO: replace with real widget
-          return Scaffold(body: Center(child: Text(l.requestService)));
+          return InDevelopmentPage(featureName: 'Request Service');
         },
       ),
       GoRoute(
-        path: AppRoutePath.postService,
-        name: AppRouteName.addService,
+        path: '${AppRoutePath.categories}/:categoryId',
+        name: AppRouteName.categoryServices,
         builder: (context, state) {
-          final l = AppLocalizations.of(context);
-          // TODO: replace with real widget
-          return Scaffold(body: Center(child: Text(l.postService)));
-        },
-      ),
-      GoRoute(
-        path: '${AppRoutePath.serviceDetail}/:serviceId',
-        name: AppRouteName.serviceDetail,
-        builder: (context, state) {
-          final id = state.pathParameters['serviceId']!;
-          // This one can be public or protected
-          final l = AppLocalizations.of(context);
-          return Scaffold(
-            appBar: AppBar(title: Text(l.serviceDetailsTitle)),
-            body: Center(child: Text(l.serviceIdLabel(id))),
+          final categoryId = int.tryParse(
+            state.pathParameters['categoryId'] ?? '',
+          );
+          final categoryExtra = state.extra;
+          return SubcategoriesPage(
+            categoryId: categoryId ?? 0,
+            category: categoryExtra is ServiceCategory ? categoryExtra : null,
           );
         },
       ),
-
-      // CHATS (SIGNED)
+      GoRoute(
+        path: AppRoutePath.addService,
+        name: AppRouteName.addService,
+        builder: (context, state) {
+          return InDevelopmentPage(featureName: 'Post Service');
+        },
+      ),
+      GoRoute(
+        path: '${AppRoutePath.serviceProviders}/:serviceId',
+        name: AppRouteName.serviceProviders,
+        builder: (context, state) {
+          final id = state.pathParameters['serviceId']!;
+          final l = AppLocalizations.of(context);
+          return InDevelopmentPage(featureName: 'Service Providers');
+        },
+      ),
       GoRoute(
         path: AppRoutePath.chats,
         name: AppRouteName.chats,
         builder: (context, state) {
-          // TODO: replace with chat list widget
-          final l = AppLocalizations.of(context);
-          return Scaffold(body: Center(child: Text(l.chatsListTitle)));
+          return InDevelopmentPage(featureName: 'Chats');
         },
       ),
       GoRoute(
         path: '${AppRoutePath.chats}/:chatId',
         name: AppRouteName.chatDetail,
         builder: (context, state) {
-          final chatId = state.pathParameters['chatId']!;
-          final l = AppLocalizations.of(context);
-          // TODO: replace with chat screen
-          return Scaffold(
-            appBar: AppBar(title: Text(l.chatTitle)),
-            body: Center(child: Text('${l.chatTitle} #$chatId')),
-          );
+          return InDevelopmentPage(featureName: 'Chat');
         },
       ),
     ],

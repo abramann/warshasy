@@ -12,10 +12,10 @@ class AppRouteName {
   static const profileDetail = 'profile-detail';
 
   // Services / actions
-  static const requestService = 'request-service';
+  static const searchService = 'search-service';
   static const addService = 'add-service';
-  static const serviceDetail = 'service-detail';
-
+  static const serviceProviders = 'service-providers';
+  static const categoryServices = 'category-services';
   // Chat
   static const chats = 'chats';
   static const chatDetail = 'chat-detail';
@@ -31,11 +31,12 @@ class AppRoutePath {
 
   // Profile
   static const profile = '/profile';
-
+  static const profileSetup = 'profile-setup';
   // Services
-  static const requestService = '/request-service';
-  static const postService = '/post-service';
-  static const serviceDetail = '/service';
+  static const searchService = '/search-service';
+  static const addService = '/add-service';
+  static const serviceProviders = '/service-providers';
+  static const categories = '/categories';
 
   // Chat
   static const chats = '/chats';

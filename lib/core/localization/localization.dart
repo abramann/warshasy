@@ -60,8 +60,8 @@ class AppLocalizations {
       'ok': 'OK',
       'servicesAvailable': 'Services Available',
       'searchIn': 'Search in',
-      'notSureService': 'Not sure which service?',
-      'expertsCanHelp': 'Our experts can help you choose',
+      'notFindService': 'Can not find your service?',
+      'contactUsToAdd': 'Contact us to add',
       'allServices': 'All Services',
       'searchResults': 'Search Results',
       'noServicesFound': 'No services found',
@@ -123,15 +123,18 @@ class AppLocalizations {
       'chatsListTitle': 'Chats list',
       'chatTitle': 'Chat',
       'signInTitle': 'Welcome!',
-      'signInSubtitle': 'Enter your phone number to receive a verification code',
+      'signInSubtitle':
+          'Enter your phone number to receive a verification code',
       'phoneLabel': 'Phone number',
       'phoneRequiredError': 'Please enter your phone number',
       'phoneInvalidError': 'Please enter a valid phone number',
-      'helperNote': 'We will send a verification code to your number and keep it private',
+      'helperNote':
+          'We will send a verification code to your number and keep it private',
       'signingIn': 'Signing in...',
       'signInCta': 'Continue with phone',
       'loginSuccess': 'Signed in successfully',
-      'privacyNote': 'By continuing, you agree to our Terms of Service and Privacy Policy',
+      'privacyNote':
+          'By continuing, you agree to our Terms of Service and Privacy Policy',
     },
     'ar': {
       'appTitle': 'ورشتي',
@@ -168,8 +171,8 @@ class AppLocalizations {
       'ok': 'حسناً',
       'servicesAvailable': 'الخدمات المتاحة',
       'searchIn': 'ابحث في',
-      'notSureService': 'لست متأكداً من الخدمة؟',
-      'expertsCanHelp': 'خبراؤنا يمكنهم مساعدتك في الاختيار',
+      'notFindService': 'لا يمكنك العثور على خدمتك؟',
+      'contactUsToAdd': 'تواصل معنا لإضافتها',
       'allServices': 'كل الخدمات',
       'searchResults': 'نتائج البحث',
       'noServicesFound': 'لم يتم العثور على خدمات',
@@ -284,8 +287,8 @@ class AppLocalizations {
   String get ok => _string('ok');
   String get servicesAvailable => _string('servicesAvailable');
   String get searchIn => _string('searchIn');
-  String get notSureService => _string('notSureService');
-  String get expertsCanHelp => _string('expertsCanHelp');
+  String get notFindService => _string('notFindService');
+  String get contactUsToAdd => _string('contactUsToAdd');
   String get allServices => _string('allServices');
   String get searchResults => _string('searchResults');
   String get noServicesFound => _string('noServicesFound');

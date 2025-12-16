@@ -10,10 +10,10 @@ import 'package:warshasy/core/theme/app_shadows.dart';
 import 'package:warshasy/core/utils/injection_container.dart';
 import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/auth.dart';
-import 'package:warshasy/features/home/presentation/widgets/custom_scaffold.dart';
+import 'package:warshasy/core/presentation/widgets/custom_scaffold.dart';
 import 'package:warshasy/features/static_data/domain/presentation/bloc/static_data_bloc.dart';
-import 'package:warshasy/features/user/domain/presentation/blocs/current_user_bloc/current_user_bloc.dart';
-import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc/user_bloc.dart';
+import 'package:warshasy/features/user/presentation/blocs/current_user_bloc/current_user_bloc.dart';
+import 'package:warshasy/features/user/presentation/blocs/user_bloc/user_bloc.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});

@@ -19,10 +19,10 @@ import 'package:warshasy/features/static_data/data/repositories/database_service
 import 'package:warshasy/features/static_data/domain/presentation/bloc/static_data_bloc.dart';
 import 'package:warshasy/features/static_data/domain/repositories/static_data_repository.dart';
 import 'package:warshasy/features/user/data/datasources/user_remote_datasource.dart';
-import 'package:warshasy/features/user/domain/presentation/blocs/current_user_bloc/current_user_bloc.dart';
+import 'package:warshasy/features/user/presentation/blocs/current_user_bloc/current_user_bloc.dart';
 import 'package:warshasy/features/user/domain/repositories/user_repository.dart';
 import 'package:warshasy/features/user/domain/repositories/user_repository_impl.dart';
-import 'package:warshasy/features/user/domain/presentation/blocs/user_bloc/user_bloc.dart';
+import 'package:warshasy/features/user/presentation/blocs/user_bloc/user_bloc.dart';
 
 // ============================================
 // DEPENDENCY INJECTION - PRODUCTS MODULE

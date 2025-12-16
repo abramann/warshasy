@@ -19,6 +19,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     on<SearchUsersRequested>(_onSearchUsers);
     on<ClearUserRequested>(_onClearUser);
     on<RefreshUserRequested>(_onRefreshUser);
+    on<AssignCurrentUserRequested>(_onAssignCurrentUser);
   }
 
   Future<void> _onLoadUser(
@@ -83,6 +84,14 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       final failure = ErrorMapper.map(e);
       emit(UserError(userId: '', failure: failure));
     }
+  }
+
+  Future<void> _onAssignCurrentUser(
+    AssignCurrentUserRequested event,
+    Emitter<UserState> emit,
+  ) async {
+    _cachedUser = event.user;
+    emit(UserLoaded(user: event.user));
   }
 
   void _onClearUser(ClearUserRequested event, Emitter<UserState> emit) {

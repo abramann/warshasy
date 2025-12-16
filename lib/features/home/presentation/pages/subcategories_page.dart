@@ -1,369 +1,367 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:warshasy/core/localization/localization.dart';
+import 'package:warshasy/core/presentation/widgets/common_widgets.dart';
+import 'package:warshasy/core/route/app_routes.dart';
+import 'package:warshasy/core/theme/app_borders.dart';
+import 'package:warshasy/core/theme/app_colors.dart';
+import 'package:warshasy/core/theme/app_shadows.dart';
+import 'package:warshasy/features/static_data/domain/entites/service.dart';
+import 'package:warshasy/features/static_data/domain/entites/service_category.dart';
+import 'package:warshasy/features/static_data/domain/presentation/bloc/static_data_bloc.dart';
 
-// Data Models
-class ServiceCategory {
-  final int id;
-  final String name;
-  final String icon;
-  final Color color;
-  final List<Subcategory> subcategories;
+class SubcategoriesPage extends StatefulWidget {
+  final int categoryId;
+  final ServiceCategory? category;
 
-  ServiceCategory({
-    this.id = 0,
-    required this.name,
-    required this.icon,
-    required this.color,
-    required this.subcategories,
-  });
-}
-
-class Subcategory {
-  final String name;
-  final String emoji;
-  final bool isPopular;
-
-  Subcategory({
-    required this.name,
-    required this.emoji,
-    this.isPopular = false,
-  });
-}
-
-// Sample Data
-class ServiceData {
-  static final crafts = ServiceCategory(
-    name: 'Crafts',
-    icon: 'assets/crafts.png',
-    color: const Color(0xFFFF6B35),
-    subcategories: [
-      Subcategory(name: 'General Electricity', emoji: '⚡', isPopular: true),
-      Subcategory(name: 'Painting & Decorating', emoji: '🎨', isPopular: true),
-      Subcategory(name: 'Carpentry', emoji: '🪵'),
-      Subcategory(name: 'Aluminum & Glass', emoji: '🪟'),
-      Subcategory(name: 'Blacksmithing & Welding', emoji: '🔨'),
-      Subcategory(name: 'Construction & Renovation', emoji: '🏗️'),
-      Subcategory(name: 'Water & Sanitation', emoji: '🚰', isPopular: true),
-      Subcategory(name: 'Plastering & Ceilings', emoji: '🧱'),
-      Subcategory(name: 'Ceramic & Tile', emoji: '🟫'),
-      Subcategory(name: 'Marble & Stone', emoji: '⬜'),
-      Subcategory(name: 'Upholstery & Furniture', emoji: '🛋️'),
-    ],
-  );
-
-  static final technical = ServiceCategory(
-    name: 'Technical Services',
-    icon: 'assets/technical.png',
-    color: const Color(0xFF4A90E2),
-    subcategories: [
-      Subcategory(
-        name: 'Air Conditioning & Refrigeration',
-        emoji: '❄️',
-        isPopular: true,
-      ),
-      Subcategory(name: 'Solar Energy', emoji: '☀️'),
-      Subcategory(name: 'Electronics', emoji: '🔌'),
-      Subcategory(name: 'Internet & Networks', emoji: '📡', isPopular: true),
-      Subcategory(name: 'Electrical Appliance Maintenance', emoji: '🔧'),
-      Subcategory(name: 'Elevator Maintenance', emoji: '🛗'),
-    ],
-  );
-
-  static final cleaning = ServiceCategory(
-    name: 'Cleaning & Household',
-    icon: 'assets/cleaning_and_home.png',
-    color: const Color(0xFF50C878),
-    subcategories: [
-      Subcategory(name: 'House Cleaning', emoji: '🏠', isPopular: true),
-      Subcategory(name: 'Carpet Cleaning', emoji: '🧺'),
-      Subcategory(name: 'Water Tank Cleaning', emoji: '💧'),
-      Subcategory(name: 'Roof Cleaning', emoji: '🏚️'),
-      Subcategory(
-        name: 'Moving & Furniture Services',
-        emoji: '📦',
-        isPopular: true,
-      ),
-      Subcategory(name: 'Landscaping', emoji: '🌳'),
-      Subcategory(name: 'Agricultural Services', emoji: '🌾'),
-    ],
-  );
-}
-
-// Subcategory Screen
-class SubcategoryScreen extends StatefulWidget {
-  final ServiceCategory category;
-
-  const SubcategoryScreen({Key? key, required this.category}) : super(key: key);
+  const SubcategoriesPage({super.key, required this.categoryId, this.category});
 
   @override
-  State<SubcategoryScreen> createState() => _SubcategoryScreenState();
+  State<SubcategoriesPage> createState() => _SubcategoriesPageState();
 }
 
-class _SubcategoryScreenState extends State<SubcategoryScreen> {
+class _SubcategoriesPageState extends State<SubcategoriesPage> {
   String searchQuery = '';
-  List<Subcategory> get filteredSubcategories {
-    if (searchQuery.isEmpty) {
-      return widget.category.subcategories;
-    }
-    return widget.category.subcategories
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+
+    return BlocBuilder<StaticDataBloc, StaticDataState>(
+      builder: (context, state) {
+        if (state is StaticDataLoading || state is StaticDataInitial) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (state is! StaticDataLoaded) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: Center(child: Text(l.unexpectedError)),
+          );
+        }
+
+        final category =
+            widget.category ?? state.getCategoryById(widget.categoryId);
+        if (category == null) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: Center(child: Text(l.noServicesFound)),
+          );
+        }
+
+        final services = _filteredServices(category.services);
+        final isTablet = MediaQuery.of(context).size.width > 600;
+        final localizedName = _localizedCategoryName(category, context);
+
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: CommonWidgets.buildDefaultAppBar(
+            context,
+            title: localizedName,
+          ),
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(isTablet ? 24 : 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  //  _CategoryHeader(category: category),
+                  // const SizedBox(height: 16),
+                  _buildSearchBar(context, localizedName),
+                  const SizedBox(height: 20),
+                  _buildInfoBanner(context),
+                  const SizedBox(height: 24),
+                  Text(
+                    searchQuery.isEmpty ? l.allServices : l.searchResults,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  services.isEmpty
+                      ? _EmptyState(message: l.noServicesFound)
+                      : GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: isTablet ? 3 : 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: isTablet ? 1.2 : 1.05,
+                        ),
+                        itemCount: services.length,
+                        itemBuilder: (context, index) {
+                          final service = services[index];
+                          return _ServiceCard(
+                            service: service,
+                            onTap: () => _onServiceTap(context, service),
+                            name: _localizedServiceName(service, context),
+                          );
+                        },
+                      ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<Service> _filteredServices(List<Service> services) {
+    if (searchQuery.isEmpty) return services;
+    final query = searchQuery.toLowerCase();
+    return services
         .where(
-          (sub) => sub.name.toLowerCase().contains(searchQuery.toLowerCase()),
+          (service) => _localizedServiceName(
+            service,
+            context,
+          ).toLowerCase().contains(query),
         )
         .toList();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isTablet = MediaQuery.of(context).size.width > 600;
+  Widget _buildSearchBar(BuildContext context, String categoryName) {
     final l = AppLocalizations.of(context);
-
-    return Scaffold(
-      backgroundColor: const Color(0xFFFAFAFA),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.category.name,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              '${widget.category.subcategories.length} ${l.servicesAvailable}',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                widget.category.color,
-                widget.category.color.withOpacity(0.8),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        elevation: 2,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        boxShadow: AppShadows.subtle,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.all(isTablet ? 24.0 : 20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Search Bar
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  onChanged: (value) {
-                    setState(() {
-                      searchQuery = value;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: '${l.searchIn} ${widget.category.name}...',
-                    hintStyle: const TextStyle(color: Color(0xFF999999)),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      color: Color(0xFF999999),
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Info Banner
-              Container(
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFE3F2FD), Color(0xFFBBDEFB)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    const Text('💡', style: TextStyle(fontSize: 24)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l.notSureService,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF1976D2),
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            l.expertsCanHelp,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF1976D2),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Section Header
-              Text(
-                searchQuery.isEmpty ? l.allServices : l.searchResults,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF333333),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Subcategory Grid
-              filteredSubcategories.isEmpty
-                  ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.search_off,
-                            size: 64,
-                            color: Color(0xFF999999),
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            l.noServicesFound,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF666666),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                  : GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: isTablet ? 3 : 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 1.1,
-                    ),
-                    itemCount: filteredSubcategories.length,
-                    itemBuilder: (context, index) {
-                      final subcategory = filteredSubcategories[index];
-                      return _buildSubcategoryCard(context, subcategory);
-                    },
-                  ),
-            ],
+      child: TextField(
+        onChanged: (value) => setState(() => searchQuery = value),
+        decoration: InputDecoration(
+          hintText: '${l.searchIn} $categoryName...',
+          prefixIcon: const Icon(Icons.search, color: AppColors.textTertiary),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSubcategoryCard(BuildContext context, Subcategory subcategory) {
+  Widget _buildInfoBanner(BuildContext context) {
     final l = AppLocalizations.of(context);
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE3F2FD), Color(0xFFBBDEFB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, color: AppColors.info),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l.notFindService,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.info,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  l.contactUsToAdd,
+                  style: const TextStyle(fontSize: 12, color: AppColors.info),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onServiceTap(BuildContext context, Service service) {
+    context.pushNamed(
+      AppRouteName.serviceProviders,
+      pathParameters: {'serviceId': service.id.toString()},
+    );
+  }
+
+  String _localizedServiceName(Service service, BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return isArabic ? service.nameAr : service.nameEn;
+  }
+
+  String _localizedCategoryName(
+    ServiceCategory category,
+    BuildContext context,
+  ) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return isArabic ? category.nameAr : category.nameEn;
+  }
+}
+
+class _CategoryHeader extends StatelessWidget {
+  final ServiceCategory category;
+
+  const _CategoryHeader({required this.category});
+
+  @override
+  Widget build(BuildContext context) {
+    final name =
+        Localizations.localeOf(context).languageCode == 'ar'
+            ? category.nameAr
+            : category.nameEn;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppRadius.medium),
+        boxShadow: AppShadows.subtle,
+      ),
+      child: Row(
+        children: [
+          _CategoryIcon(iconUrl: category.iconUrl),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                if (category.description != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      category.description!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryIcon extends StatelessWidget {
+  final String? iconUrl;
+
+  const _CategoryIcon({this.iconUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.primary.withOpacity(0.08),
+      ),
+      child: ClipOval(
+        child:
+            (iconUrl != null && iconUrl!.isNotEmpty)
+                ? Image.network(
+                  iconUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder:
+                      (_, __, ___) =>
+                          const Icon(Icons.handyman, color: AppColors.primary),
+                )
+                : const Icon(Icons.handyman, color: AppColors.primary),
+      ),
+    );
+  }
+}
+
+class _ServiceCard extends StatelessWidget {
+  final Service service;
+  final String name;
+  final VoidCallback onTap;
+
+  const _ServiceCard({
+    required this.service,
+    required this.name,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => _onSubcategoryTap(context, subcategory),
-      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.medium),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.transparent, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.medium),
+          border: Border.all(color: AppColors.primary.withOpacity(0.05)),
+          boxShadow: AppShadows.subtle,
         ),
-        child: Stack(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Main Content
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Emoji Icon
-                  Text(subcategory.emoji, style: const TextStyle(fontSize: 36)),
-                  const SizedBox(height: 12),
-                  // Service Name
-                  Text(
-                    subcategory.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF333333),
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.miscellaneous_services_outlined,
+                color: AppColors.primary,
               ),
             ),
-            // Popular Badge
-            if (subcategory.isPopular)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
+            const SizedBox(height: 12),
+            Text(
+              name,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (service.description != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  service.description!,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
                   ),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    l.popular,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
           ],
@@ -371,15 +369,35 @@ class _SubcategoryScreenState extends State<SubcategoryScreen> {
       ),
     );
   }
+}
 
-  void _onSubcategoryTap(BuildContext context, Subcategory subcategory) {
-    // Navigate to service details or technician list
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '${AppLocalizations.of(context).openingItem} ${subcategory.name}...',
+class _EmptyState extends StatelessWidget {
+  final String message;
+
+  const _EmptyState({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.search_off_outlined,
+              size: 64,
+              color: AppColors.textTertiary,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
         ),
-        behavior: SnackBarBehavior.floating,
       ),
     );
   }

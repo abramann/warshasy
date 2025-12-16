@@ -49,16 +49,16 @@ class StaticDataBloc extends Bloc<StaticDataEvent, StaticDataState> {
       // Load cities and service categories in parallel
       final results = await Future.wait([
         staticDataRepository.getAllCities(),
-        //  staticDataRepository.getAllServiceCategories(),
+        staticDataRepository.getAllServiceCategories(),
       ]);
 
       _cachedCities = results[0] as List<City>;
-      // _cachedCategories = results[1] as List<ServiceCategory>;
+      _cachedCategories = results[1] as List<ServiceCategory>;
 
       emit(
         StaticDataLoaded(
           cities: _cachedCities!,
-          serviceCategories: [], //_cachedCategories!,
+          serviceCategories: _cachedCategories!,
         ),
       );
     } on Exception catch (e) {

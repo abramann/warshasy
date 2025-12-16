@@ -56,10 +56,10 @@ INSERT INTO city_areas (city_id, area_name) VALUES
 -- SEED DATA - SERVICE CATEGORIES
 -- ============================================
 
-INSERT INTO service_categories (name_ar, name_en, description, display_order) VALUES
-('خدمات حرفية', 'Craft Services', 'خدمات الأعمال الحرفية والإنشائية', 1),
-('خدمات تقنية', 'Technical Services', 'خدمات التكنولوجيا والأجهزة التقنية', 2),
-('تنظيف وخدمات منزلية', 'Cleaning & Home Services', 'خدمات التنظيف والعناية بالمنزل', 3);
+ INSERT INTO service_categories (name_ar, name_en, description, display_order) VALUES
+ ('1', 'خدمات حرفية', 'Craft Services', 'خدمات الأعمال الحرفية والإنشائية', 'assets/icons/crafts.png', '1', 'true'),
+ ('2', 'خدمات تقنية', 'Technical Services', 'خدمات التكنولوجيا والأجهزة التقنية', 'assets/icons/technical.png', '2', 'true'),
+ ('3', 'تنظيف وخدمات منزلية', 'Cleaning & Home Services', 'خدمات التنظيف والعناية بالمنزل', 'assets/icons/cleaning_and_home.png', '3', 'true');
 
 -- ============================================
 -- SEED DATA - SERVICES

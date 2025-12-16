@@ -16,6 +16,13 @@ class LoadUserRequested extends UserEvent {
   List<Object?> get props => [userId, forceRefresh];
 }
 
+class AssignCurrentUserRequested extends UserEvent {
+  final User user;
+  AssignCurrentUserRequested({required this.user});
+  @override
+  List<Object?> get props => [user];
+}
+
 // Refresh user silently (without loading state)
 class RefreshUserRequested extends UserEvent {
   final String userId;

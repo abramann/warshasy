@@ -1,16 +1,13 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:warshasy/core/constants/constants.dart';
 import 'package:warshasy/core/localization/localization.dart';
 import 'package:warshasy/core/route/app_routes.dart';
 import 'package:warshasy/core/theme/app_colors.dart';
-import 'package:warshasy/core/utils/injection_container.dart';
 import 'package:warshasy/core/utils/snackbar_utils.dart';
 import 'package:warshasy/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:warshasy/features/static_data/domain/presentation/bloc/static_data_bloc.dart';
-import 'package:warshasy/features/user/domain/presentation/blocs/current_user_bloc/current_user_bloc.dart';
 
 class StartupPage extends StatefulWidget {
   @override
@@ -21,7 +18,7 @@ class StartupPageState extends State<StartupPage> {
   @override
   void initState() {
     super.initState();
-
+    // Initialize required data
     context.read<StaticDataBloc>().add(LoadStaticData());
     context.read<AuthBloc>().add(AuthStartup());
   }
@@ -51,10 +48,8 @@ class StartupPageState extends State<StartupPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Spacer to push content up a bit
               const Spacer(flex: 2),
-
-              // App Logo with animation
+              // App Logo
               Hero(
                 tag: 'app_logo',
                 child: Container(
@@ -75,9 +70,7 @@ class StartupPageState extends State<StartupPage> {
                   child: Image.asset(AppAssets.appLogo, fit: BoxFit.contain),
                 ),
               ),
-
               const SizedBox(height: 40),
-
               // App Name
               Text(
                 l.appTitle,
@@ -88,10 +81,8 @@ class StartupPageState extends State<StartupPage> {
                   letterSpacing: 1.2,
                 ),
               ),
-
               const SizedBox(height: 12),
-
-              // Tagline or description
+              // Tagline
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
                 child: Text(
@@ -104,9 +95,7 @@ class StartupPageState extends State<StartupPage> {
                   textAlign: TextAlign.center,
                 ),
               ),
-
               const Spacer(flex: 2),
-
               // Loading Indicator
               Column(
                 children: [
@@ -130,7 +119,6 @@ class StartupPageState extends State<StartupPage> {
                   ),
                 ],
               ),
-
               const Spacer(flex: 1),
             ],
           ),
@@ -141,44 +129,29 @@ class StartupPageState extends State<StartupPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocListener(
-      listeners: [
-        // Auth listener - Load current user when authenticated
-        BlocListener<AuthBloc, AuthState>(
-          listener: (context, authState) {
-            if (authState is Authenticated) {
-              context.read<CurrentUserBloc>().add(
-                LoadCurrentUser(userId: authState.session.userId),
-              );
-            } else {
-              context.read<CurrentUserBloc>().add(ClearCurrentUser());
-            }
-          },
-        ),
-        // StaticData listener
-        BlocListener<StaticDataBloc, StaticDataState>(
-          listener: (context, staticDataState) {
-            final l = AppLocalizations.of(context);
-            if (staticDataState is StaticDataLoaded) {
-              // Navigate to home page after static data is loaded
-              context.goNamed(AppRouteName.home);
-            } else if (staticDataState is StaticDataError) {
-              SnackBarUtils.showError(
-                context,
-                '${l.loadingDataError}: ${staticDataState.failure.message}',
-                action: SnackBarAction(
-                  label: l.tryAgain,
-                  onPressed: () {
-                    context.read<StaticDataBloc>().add(
-                      LoadStaticData(forceRefresh: true),
-                    );
-                  },
-                ),
-              );
-            }
-          },
-        ),
-      ],
+    return BlocListener<StaticDataBloc, StaticDataState>(
+      // Only listen to StaticData state changes
+      listener: (context, staticDataState) {
+        final l = AppLocalizations.of(context);
+
+        if (staticDataState is StaticDataLoaded) {
+          // Navigate to home page after static data is loaded
+          context.goNamed(AppRouteName.home);
+        } else if (staticDataState is StaticDataError) {
+          SnackBarUtils.showError(
+            context,
+            '${l.loadingDataError}: ${staticDataState.failure.message}',
+            action: SnackBarAction(
+              label: l.tryAgain,
+              onPressed: () {
+                context.read<StaticDataBloc>().add(
+                  LoadStaticData(forceRefresh: true),
+                );
+              },
+            ),
+          );
+        }
+      },
       child: _buildStartupUI(context),
     );
   }

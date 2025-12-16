@@ -8,12 +8,12 @@ import 'package:warshasy/core/theme/app_borders.dart';
 import 'package:warshasy/core/theme/app_colors.dart';
 import 'package:warshasy/core/theme/app_shadows.dart';
 import 'package:warshasy/core/utils/snackbar_utils.dart';
-import 'package:warshasy/features/home/presentation/widgets/common_widgets.dart';
-import 'package:warshasy/features/home/presentation/widgets/location_selector.dart';
+import 'package:warshasy/core/presentation/widgets/common_widgets.dart';
+import 'package:warshasy/core/presentation/widgets/location_selector.dart';
 import 'package:warshasy/features/static_data/domain/entites/location.dart';
 import 'package:warshasy/features/static_data/domain/presentation/bloc/static_data_bloc.dart';
 import 'package:warshasy/features/user/domain/entities/user.dart';
-import 'package:warshasy/features/user/domain/presentation/blocs/current_user_bloc/current_user_bloc.dart';
+import 'package:warshasy/features/user/presentation/blocs/current_user_bloc/current_user_bloc.dart';
 
 class ProfileSetupPage extends StatefulWidget {
   const ProfileSetupPage({super.key});
@@ -70,7 +70,10 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     final updatedUser = _currentUser!.copyWith(
       fullName: _nameController.text.trim(),
       location: _selectedLocation!,
-      bio: _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
+      bio:
+          _bioController.text.trim().isEmpty
+              ? null
+              : _bioController.text.trim(),
       updatedAt: DateTime.now(),
     );
 
@@ -147,13 +150,14 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   backgroundColor: AppColors.surface,
                   backgroundImage:
                       avatarUrl != null ? NetworkImage(avatarUrl) : null,
-                  child: avatarUrl == null
-                      ? Icon(
-                          Icons.person,
-                          size: 60,
-                          color: AppColors.textTertiary,
-                        )
-                      : null,
+                  child:
+                      avatarUrl == null
+                          ? Icon(
+                            Icons.person,
+                            size: 60,
+                            color: AppColors.textTertiary,
+                          )
+                          : null,
                 ),
               );
             },
@@ -205,11 +209,21 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSectionTitle(textTheme, l.fullNameLabel, isRequired: true, l: l),
+          _buildSectionTitle(
+            textTheme,
+            l.fullNameLabel,
+            isRequired: true,
+            l: l,
+          ),
           const SizedBox(height: 8),
           _buildNameField(textTheme, isUpdating, l),
           const SizedBox(height: 20),
-          _buildSectionTitle(textTheme, l.locationLabel, isRequired: true, l: l),
+          _buildSectionTitle(
+            textTheme,
+            l.locationLabel,
+            isRequired: true,
+            l: l,
+          ),
           const SizedBox(height: 12),
           _buildLocationSection(isUpdating),
           const SizedBox(height: 20),
@@ -377,22 +391,23 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                 borderRadius: BorderRadius.circular(AppRadius.medium),
               ),
             ),
-            child: isUpdating
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            child:
+                isUpdating
+                    ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                    : Text(
+                      l.saveChanges,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
-                  )
-                : Text(
-                    l.saveChanges,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                  ),
           ),
         ),
         const SizedBox(height: 12),
@@ -411,9 +426,9 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             child: Text(
               l.cancel,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
             ),
           ),
         ),
@@ -445,53 +460,54 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
           top: Radius.circular(AppRadius.large),
         ),
       ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: AppColors.textTertiary,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      builder:
+          (context) => SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: AppColors.textTertiary,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  _buildAvatarOption(
+                    icon: Icons.camera_alt,
+                    title: l.takePhoto,
+                    color: AppColors.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.camera);
+                    },
+                  ),
+                  _buildAvatarOption(
+                    icon: Icons.photo_library,
+                    title: l.chooseFromGallery,
+                    color: AppColors.info,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.gallery);
+                    },
+                  ),
+                  if (_currentUser?.avatarUrl != null)
+                    _buildAvatarOption(
+                      icon: Icons.delete,
+                      title: l.deletePhoto,
+                      color: AppColors.error,
+                      onTap: () {
+                        Navigator.pop(context);
+                        _deleteAvatar();
+                      },
+                    ),
+                ],
               ),
-              _buildAvatarOption(
-                icon: Icons.camera_alt,
-                title: l.takePhoto,
-                color: AppColors.primary,
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.camera);
-                },
-              ),
-              _buildAvatarOption(
-                icon: Icons.photo_library,
-                title: l.chooseFromGallery,
-                color: AppColors.info,
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickImage(ImageSource.gallery);
-                },
-              ),
-              if (_currentUser?.avatarUrl != null)
-                _buildAvatarOption(
-                  icon: Icons.delete,
-                  title: l.deletePhoto,
-                  color: AppColors.error,
-                  onTap: () {
-                    Navigator.pop(context);
-                    _deleteAvatar();
-                  },
-                ),
-            ],
+            ),
           ),
-        ),
-      ),
     );
   }
 
@@ -513,9 +529,9 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       title: Text(
         title,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: color == AppColors.error ? color : AppColors.textPrimary,
-              fontWeight: FontWeight.w500,
-            ),
+          color: color == AppColors.error ? color : AppColors.textPrimary,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       onTap: onTap,
     );
@@ -536,10 +552,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
 
       if (pickedImage != null && mounted) {
         context.read<CurrentUserBloc>().add(
-              UploadCurrentUserAvatar(
-                filePath: pickedImage.path,
-              ),
-            );
+          UploadCurrentUserAvatar(filePath: pickedImage.path),
+        );
       }
     } catch (_) {
       if (mounted) {
@@ -551,8 +565,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   void _deleteAvatar() {
     if (_currentUser != null) {
       context.read<CurrentUserBloc>().add(
-            DeleteCurrentUserAvatar(userId: _currentUser!.id),
-          );
+        DeleteCurrentUserAvatar(userId: _currentUser!.id),
+      );
     }
   }
 }

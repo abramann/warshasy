@@ -49,7 +49,7 @@ class AuthGuard {
     if (location.startsWith(AppRoutePath.login)) return true;
 
     // Optional: public service detail
-    if (location.startsWith(AppRoutePath.serviceDetail)) return true;
+    //if (location.startsWith(AppRoutePath.serviceDetail)) return true;
 
     return false;
   }
