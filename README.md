@@ -7,7 +7,7 @@
 <img width="108" height="192" alt="Screenshot_20251216-031320" src="https://github.com/user-attachments/assets/1c9eae86-8b9d-47ab-b689-cf095b02aecf" />
 <img width="108" height="192" alt="Screenshot_20251216-045355" src="https://github.com/user-attachments/assets/5810ecf9-c9fe-48b5-82b6-bf6e11025544" />
 
-## Imported Libraries
+## Development Dependency
 - **State:** Bloc
 - **Backend:** Supabase  (PostgreSQL, Storage)
 - **Routing:** GoRouter
